@@ -4,6 +4,8 @@ using System.IO.Streams;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Text;
+using System.ComponentModel;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
@@ -13,12 +15,11 @@ namespace CommandRecipes
     [ApiVersion(1, 16)]
     public class CmdRec : TerrariaPlugin
     {
-        public static List<recPlayer> RPlayers = new List<recPlayer>();
         public static List<string> cats = new List<string>();
-        public static List<string> recs = new List<string>();
-        public static RecConfig config { get; set; }
+        public static List<recPlayer> RPlayers = new List<recPlayer>();
+        public static recConfig config { get; set; }
         public static string configDir { get { return Path.Combine(TShock.SavePath, "PluginConfigs"); } }
-        public static string configPath { get { return Path.Combine(configDir, "RecConfig.json"); } }
+        public static string configPath { get { return Path.Combine(configDir, "AllRecipes.json"); } }
 
         #region Info
         public override string Name
@@ -46,7 +47,6 @@ namespace CommandRecipes
         public override void Initialize()
         {
             ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
-            ServerApi.Hooks.ServerChat.Register(this, OnChat);
             ServerApi.Hooks.NetGreetPlayer.Register(this, OnGreet);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
             ServerApi.Hooks.NetGetData.Register(this, OnGetData);
@@ -59,7 +59,6 @@ namespace CommandRecipes
             if (disposing)
             {
                 ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
-                ServerApi.Hooks.ServerChat.Deregister(this, OnChat);
                 ServerApi.Hooks.NetGreetPlayer.Deregister(this, OnGreet);
                 ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
                 ServerApi.Hooks.NetGetData.Deregister(this, OnGetData);
@@ -73,14 +72,20 @@ namespace CommandRecipes
         {
             Order = -10;
 
-            config = new RecConfig();
+            config = new recConfig();
         }
 
         #region OnInitialize
         public static void OnInitialize(EventArgs args)
         {
-            Commands.ChatCommands.Add(new Command("cmdrec", Craft, "rcraft"));
-            Commands.ChatCommands.Add(new Command("cmdrec.admin.reload", recReload, "recrld"));
+            Commands.ChatCommands.Add(new Command("cmdrec.player.craft", Craft, "craftr")
+                {
+                    HelpText = "Allows the player to craft items via command from config-defined recipes."
+                });
+            Commands.ChatCommands.Add(new Command("cmdrec.admin.reload", recReload, "recrld")
+                {
+                    HelpText = "Reloads AllRecipes.json"
+                });
 
             Utils.SetUpConfig();
         }
@@ -92,111 +97,16 @@ namespace CommandRecipes
             RPlayers.Add(new recPlayer(args.Who));
 
             var player = TShock.Players[args.Who];
-            var recPlayer = Utils.GetPlayers(args.Who);
+            var recPlayer = Utils.GetPlayer(args.Who);
         }
         #endregion
 
         #region OnLeave
         private void OnLeave(LeaveEventArgs args)
         {
-            var player = Utils.GetPlayers(args.Who);
+            var player = Utils.GetPlayer(args.Who);
 
             RPlayers.RemoveAll(pl => pl.Index == args.Who);
-        }
-        #endregion
-
-        #region OnChat
-        public void OnChat(ServerChatEventArgs args)
-        {
-            recPlayer player = Utils.GetPlayers(args.Who);
-
-            if (player.isCrafting)
-            {
-                if (args.Text.ToLower() == "/rcraft")
-                {
-                    player.menuTrack.Add("main");
-                    player.TSPlayer.SendInfoMessage("Choose a category/recipe by typing it.");
-                    player.activeMenu = player.menuTrack[player.menuTrack.Count - 1];
-                }
-                else if (player.menuTrack.Count > 0 && cats.Contains(player.activeMenu)
-                    && !player.menuTrack.Contains(args.Text.ToLower()))
-                {
-                    player.menuTrack.Add(args.Text.ToLower());
-                    player.activeMenu = player.menuTrack[player.menuTrack.Count - 1];
-                }
-                else if (args.Text.ToLower() == "back" && player.menuTrack.Count > 1)
-                {
-                    player.menuTrack.RemoveAt(player.menuTrack.Count - 1);
-                    player.activeIngs.Clear();
-                    player.activePros.Clear();
-                    player.activeRec = false;
-                    player.activeMenu = player.menuTrack[player.menuTrack.Count - 1];
-                }
-                else
-                {
-                    player.TSPlayer.SendErrorMessage("Invalid choice! Type in a valid option or '/rcraft' to exit the crafting menu.");
-                }
-
-                if (cats.Contains(player.activeMenu))
-                {
-                    foreach (Category cat in config.Categories)
-                    {
-                        if (cat.parent.ToLower() == player.activeMenu)
-                        {
-                            for (int i = 0; i < cat.options.Count; i++)
-                            {
-                                player.TSPlayer.SendMessage(cat.options[i], Color.White);
-                            }
-                        }
-                    }
-                }
-                else if (recs.Contains(player.activeMenu))
-                {
-                    foreach (Recipe rec in config.Recipes)
-                    {
-                        if (rec.name.ToLower() == player.activeMenu)
-                        {
-                            List<string> recIngs = new List<string>();
-                            List<string> recPros = new List<string>();
-                            foreach (Ingredient ing in rec.ingredients)
-                            {
-                                string iName = TShock.Utils.GetItemById(ing.itemid).name;
-                                string iAmt = ing.amount.ToString();
-                                string iPrefix = TShock.Utils.GetPrefixById(ing.itemid).ToString();
-
-                                recPros.Add((iPrefix == "0") ? string.Format("{0} {1} {2}(s)", iAmt, iPrefix, iName) :
-                                    string.Format("{0} {1}(s)", iAmt, iName));
-
-                                foreach (Ingredient actIng in player.activeIngs)
-                                {
-                                    if (actIng.itemid == ing.itemid)
-                                    {
-                                        actIng.amount += ing.amount;
-                                    }
-                                    else
-                                        player.activeIngs.Add(new Ingredient(ing.itemid, ing.amount));
-                                }
-                                foreach (Product pro in rec.products)
-                                {
-                                    string pName = TShock.Utils.GetItemById(pro.itemid).name;
-                                    string pAmt = pro.amount.ToString();
-                                    string pPrefix = TShock.Utils.GetPrefixById(pro.prefix).ToString();
-
-                                    recPros.Add((pPrefix == "0") ? string.Format("{0} {1} {2}(s)", pAmt, pPrefix, pName) :
-                                        string.Format("{0} {1}(s)", pAmt, pName));
-                                    player.activePros.Add(new Product(pro.itemid, pro.amount, pro.prefix));
-                                }
-                            }
-                            player.TSPlayer.SendInfoMessage("{0} requires {1}", rec.name, string.Join(", ", recIngs));
-                            player.TSPlayer.SendInfoMessage("to create {0}", string.Join(", ", recPros));
-                            player.TSPlayer.SendInfoMessage("Drop the materials, type /rcraft to stop crafting, or back to go back.");
-                            player.activeRec = true;
-                        }
-                    }
-                    args.Handled = true;
-                    return;
-                }
-            }
         }
         #endregion
 
@@ -223,50 +133,60 @@ namespace CommandRecipes
                     Item item = new Item();
                     item.SetDefaults(netid);
 
+                    if (id == 0)
+                        return;
+
                     foreach (recPlayer player in RPlayers)
                     {
-                        if (player.isCrafting)
+                        if (player.activeRecipe != null)
                         {
-                            foreach (Ingredient actIng in player.activeIngs)
+                            recItem fulfilledIngredient = null;
+                            foreach (recItem ing in player.activeRecipe.ingredients)
                             {
-                                if (actIng.itemid == netid)
+                                if (ing.name == item.name && (ing.prefix != 0 || ing.prefix == item.prefix))
                                 {
-                                    actIng.amount -= stacks;
+                                    ing.stack -= stacks;
 
-                                    if (actIng.amount > 0)
+                                    if (ing.stack > 0)
                                     {
-                                        player.TSPlayer.SendInfoMessage("Drop another {0} {1}(s).", player.activeIngs[netid], item.name);
+                                        player.TSPlayer.SendInfoMessage("Drop another {0} {1}{2}(s).", 
+                                            ing.stack, (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
                                         args.Handled = true;
                                         return;
                                     }
-                                    else if (actIng.amount < 0)
+                                    else if (ing.stack < 0)
                                     {
-                                        player.TSPlayer.SendInfoMessage("Giving back {0} {1}(s)", Math.Abs(actIng.amount), item.name);
+                                        player.TSPlayer.SendInfoMessage("Giving back {0} {1}{2}(s)", 
+                                            Math.Abs(ing.stack), (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
                                         args.Handled = true;
-                                        player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(actIng.amount));
-                                        player.activeIngs.Remove(actIng);
+                                        player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), item.prefix);
+                                        fulfilledIngredient = ing;
                                     }
                                     else
                                     {
-                                        player.TSPlayer.SendInfoMessage("Dropped {0} {1}(s)", stacks, item.name);
-                                        player.activeIngs.Remove(actIng);
+                                        player.TSPlayer.SendInfoMessage("Dropped {0} {1}{2}(s)",
+                                            stacks, (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
                                         args.Handled = true;
-                                    }
-
-                                    if (player.activeIngs.Count < 1 && player.activeRec)
-                                    {
-                                        foreach (Product pro in player.activePros)
-                                        {
-                                            Item pItem = new Item();
-                                            pItem.SetDefaults(pro.itemid);
-                                            player.TSPlayer.GiveItem(pItem.type, pItem.name, pItem.width, pItem.height, pro.amount, pro.prefix);
-                                            player.TSPlayer.SendInfoMessage("Received {0} {1} {2}(s)", pro.amount, TShock.Utils.GetPrefixById(pro.prefix), pItem.name);
-                                        }
-                                        player.activeRec = false;
-                                        player.isCrafting = false;
-                                        player.TSPlayer.SendInfoMessage("You have exited the crafting menu.");
+                                        fulfilledIngredient = ing;
                                     }
                                 }
+                            }
+                            if (fulfilledIngredient == null)
+                                return;
+                            
+                            player.activeRecipe.ingredients.Remove(fulfilledIngredient);
+
+                            if (player.activeRecipe.ingredients.Count < 1)
+                            {
+                                foreach (recItem pro in player.activeRecipe.products)
+                                {
+                                    Item product = new Item();
+                                    product.SetDefaults(pro.name);
+                                    player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, pro.prefix);
+                                    player.TSPlayer.SendSuccessMessage("Received {0} {1}{2}(s)",
+                                        pro.stack, (pro.prefix != 0) ? TShock.Utils.GetPrefixById(pro.prefix) + " " : "", product.name);
+                                }
+                                player.TSPlayer.SendInfoMessage("Finished crafting.");
                             }
                         }
                     }
@@ -279,17 +199,65 @@ namespace CommandRecipes
         #region Craft
         public static void Craft(CommandArgs args)
         {
-            var player = Utils.GetPlayers(args.Player.Index);
-            player.isCrafting = !player.isCrafting;
-            player.activeRec = false;
-            player.activeIngs.Clear();
-            player.activePros.Clear();
-            player.menuTrack.Clear();
-            player.TSPlayer.SendInfoMessage(string.Format("You have {0} the crafting menu.", (player.isCrafting) ? "entered" : "exited"));
+            args.Player.SendInfoMessage(TShock.Utils.GetPrefixById(39));
+            var player = Utils.GetPlayer(args.Player.Index);
+            if (args.Parameters.Count == 0)
+            {
+                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craftr <recipe/-quit/-list>");
+                return;
+            }
+            if (args.Parameters[0] == "-list")
+            {
+                int page;
+                if (!PaginationTools.TryParsePageNumber(args.Parameters, 1, args.Player, out page))
+                    return;
+
+                List<string> allRec = new List<string>();
+                foreach (Recipe rec in CmdRec.config.Recipes)
+                    allRec.Add(rec.name);
+                PaginationTools.SendPage(args.Player, page, PaginationTools.BuildLinesFromTerms(allRec),
+                    new PaginationTools.Settings
+                    {
+                        HeaderFormat = "Recipes ({0}/{1}):",
+                        FooterFormat = "Type /craftr -list {0} for more.",
+                        NothingToDisplayString = "There are currently no recipes defined."
+                    });
+                return;
+
+            }
+            if (args.Parameters[0] == "-quit")
+            {
+                //return everything in player.droppedItems then clear
+
+                return;
+            }
+
+            string str = string.Join(" ", args.Parameters);
+            if (!cats.Contains(str.ToLower()))
+            {
+                args.Player.SendErrorMessage("Invalid recipe!");
+            }
+            else
+            {
+                foreach (Recipe rec in config.Recipes)
+                {
+                    if (str.ToLower() == rec.name.ToLower())
+                    {
+                        player.activeRecipe = new Recipe(rec.name.ToString(), new List<recItem>(rec.ingredients), new List<recItem>(rec.products));
+                        break;
+                    }
+                }
+                if (player.activeRecipe != null)
+                {
+                    List<string> inglist = Utils.ListIngredients(player.activeRecipe.ingredients);
+                    args.Player.SendInfoMessage("The {0} recipe requires {1} to craft. Please drop all required items.", player.activeRecipe.name,
+                        String.Join(", ", inglist.ToArray(), 0, inglist.Count - 1) + ", and " + inglist.LastOrDefault());
+                }
+            }
         }
         #endregion
 
-        #region RecConfigReload
+        #region recConfigReload
         public static void recReload(CommandArgs args)
         {
             Utils.SetUpConfig();

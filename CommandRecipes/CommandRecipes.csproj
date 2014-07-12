@@ -62,7 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RecConfig.cs" />
+    <Compile Include="recConfig.cs" />
     <Compile Include="CmdRec.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="recPlayer.cs" />
