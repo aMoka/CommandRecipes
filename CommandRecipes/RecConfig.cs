@@ -9,13 +9,13 @@ using Newtonsoft.Json;
 
 namespace CommandRecipes
 {
-    public class recItem
+    public class RecItem
     {
         public string name;
         public int stack;
         public int prefix;
 
-        public recItem(string name, int stack, int prefix = 0)
+        public RecItem(string name, int stack, int prefix = 0)
         {
             this.name = name;
             this.stack = stack;
@@ -26,10 +26,10 @@ namespace CommandRecipes
     public class Recipe
     {
         public string name;
-        public List<recItem> ingredients;
-        public List<recItem> products;
+        public List<RecItem> ingredients;
+        public List<RecItem> products;
 
-        public Recipe(string name, List<recItem> ingredients, List<recItem> products)
+        public Recipe(string name, List<RecItem> ingredients, List<RecItem> products)
         {
             this.name = name;
             this.ingredients = ingredients;
@@ -37,25 +37,25 @@ namespace CommandRecipes
         }
     }
 
-    public class recConfig
+    public class RecConfig
     {
         public List<Recipe> Recipes;
 
-        public static recConfig Read(string path)
+        public static RecConfig Read(string path)
         {
             if (!File.Exists(path))
-                return new recConfig();
+                return new RecConfig();
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 return Read(fs);
             }
         }
 
-        public static recConfig Read(Stream stream)
+        public static RecConfig Read(Stream stream)
         {
             using (var sr = new StreamReader(stream))
             {
-                var cf = JsonConvert.DeserializeObject<recConfig>(sr.ReadToEnd());
+                var cf = JsonConvert.DeserializeObject<RecConfig>(sr.ReadToEnd());
                 if (ConfigRead != null)
                     ConfigRead(cf);
                 return cf;
@@ -75,11 +75,11 @@ namespace CommandRecipes
             {
                 Recipes = new List<Recipe>();
                 Recipes.Add(new Recipe("Copper Broadsword",
-                    new List<recItem>() { new recItem("Copper Bar", 8), new recItem("Stone Block", 20), new recItem("Wooden Hammer", 1) },
-                    new List<recItem>() { new recItem("Copper Broadsword", 1, 41), new recItem("Wooden Hammer", 1, 39) }));
+                    new List<RecItem>() { new RecItem("Copper Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
+                    new List<RecItem>() { new RecItem("Copper Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) }));
                 Recipes.Add(new Recipe("Iron Broadsword",
-                    new List<recItem>() { new recItem("Iron Bar", 8), new recItem("Stone Block", 20), new recItem("Wooden Hammer", 1) },
-                    new List<recItem>() { new recItem("Iron Broadsword", 1, 41), new recItem("Wooden Hammer", 1, 39) }));
+                    new List<RecItem>() { new RecItem("Iron Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
+                    new List<RecItem>() { new RecItem("Iron Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) }));
             }
 
             var str = JsonConvert.SerializeObject(this, Formatting.Indented);
@@ -89,6 +89,6 @@ namespace CommandRecipes
             }
         }
 
-        public static Action<recConfig> ConfigRead;
+        public static Action<RecConfig> ConfigRead;
     }
 }

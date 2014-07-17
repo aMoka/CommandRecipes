@@ -10,31 +10,31 @@ namespace CommandRecipes
 {
     public class Utils
     {
-        public static List<recPlayer> GetPlayerList(string name)
+        public static List<RecPlayer> GetPlayerList(string name)
         {
-            foreach (recPlayer player in CmdRec.RPlayers)
+            foreach (RecPlayer player in CmdRec.RPlayers)
             {
                 if (player.name.ToLower().Contains(name.ToLower()))
                 {
-                    return new List<recPlayer>() { player };
+                    return new List<RecPlayer>() { player };
                 }
             }
-            return new List<recPlayer>();
+            return new List<RecPlayer>();
         }
 
-        public static recPlayer GetPlayer(int index)
+        public static RecPlayer GetPlayer(int index)
         {
-            foreach (recPlayer player in CmdRec.RPlayers)
+            foreach (RecPlayer player in CmdRec.RPlayers)
                 if (player.Index == index)
                     return player;
 
             return null;
         }
 
-        public static List<string> ListIngredients(List<recItem> actIngs)
+        public static List<string> ListIngredients(List<RecItem> actIngs)
         {
             List<string> lActIngs = new List<string>();
-            foreach (recItem item in actIngs)
+            foreach (RecItem item in actIngs)
             {
                 lActIngs.Add(String.Concat(item.stack.ToString(), " ",
                     (item.prefix != 0) ? TShock.Utils.GetPrefixById(item.prefix) + " ": "", item.name, "(s)"));
@@ -51,7 +51,7 @@ namespace CommandRecipes
                     Directory.CreateDirectory(CmdRec.configDir);
 
                 if (File.Exists(CmdRec.configPath))
-                    CmdRec.config = recConfig.Read(CmdRec.configPath);
+                    CmdRec.config = RecConfig.Read(CmdRec.configPath);
                 else
                     CmdRec.config.Write(CmdRec.configPath);
 

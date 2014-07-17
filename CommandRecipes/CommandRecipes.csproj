@@ -62,10 +62,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="recConfig.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="RecConfig.cs" />
     <Compile Include="CmdRec.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="recPlayer.cs" />
+    <Compile Include="RecPlayer.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

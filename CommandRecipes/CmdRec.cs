@@ -16,8 +16,8 @@ namespace CommandRecipes
     public class CmdRec : TerrariaPlugin
     {
         public static List<string> cats = new List<string>();
-        public static List<recPlayer> RPlayers = new List<recPlayer>();
-        public static recConfig config { get; set; }
+        public static List<RecPlayer> RPlayers = new List<RecPlayer>();
+        public static RecConfig config { get; set; }
         public static string configDir { get { return Path.Combine(TShock.SavePath, "PluginConfigs"); } }
         public static string configPath { get { return Path.Combine(configDir, "AllRecipes.json"); } }
 
@@ -72,7 +72,7 @@ namespace CommandRecipes
         {
             Order = -10;
 
-            config = new recConfig();
+            config = new RecConfig();
         }
 
         #region OnInitialize
@@ -82,7 +82,7 @@ namespace CommandRecipes
                 {
                     HelpText = "Allows the player to craft items via command from config-defined recipes."
                 });
-            Commands.ChatCommands.Add(new Command("cmdrec.admin.reload", recReload, "recrld")
+            Commands.ChatCommands.Add(new Command("cmdrec.admin.reload", RecReload, "recrld")
                 {
                     HelpText = "Reloads AllRecipes.json"
                 });
@@ -94,10 +94,10 @@ namespace CommandRecipes
         #region OnGreet
         public static void OnGreet(GreetPlayerEventArgs args)
         {
-            RPlayers.Add(new recPlayer(args.Who));
+            RPlayers.Add(new RecPlayer(args.Who));
 
             var player = TShock.Players[args.Who];
-            var recPlayer = Utils.GetPlayer(args.Who);
+            var RecPlayer = RPlayers.AddToList(new RecPlayer(args.Who));
         }
         #endregion
 
@@ -136,12 +136,12 @@ namespace CommandRecipes
                     if (id == 0)
                         return;
 
-                    foreach (recPlayer player in RPlayers)
+                    foreach (RecPlayer player in RPlayers)
                     {
                         if (player.activeRecipe != null)
                         {
-                            recItem fulfilledIngredient = null;
-                            foreach (recItem ing in player.activeRecipe.ingredients)
+                            RecItem fulfilledIngredient = null;
+                            foreach (RecItem ing in player.activeIngredients)
                             {
                                 if (ing.name == item.name && (ing.prefix != 0 || ing.prefix == item.prefix))
                                 {
@@ -151,6 +151,7 @@ namespace CommandRecipes
                                     {
                                         player.TSPlayer.SendInfoMessage("Drop another {0} {1}{2}(s).", 
                                             ing.stack, (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
+                                        player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
                                         args.Handled = true;
                                         return;
                                     }
@@ -158,27 +159,30 @@ namespace CommandRecipes
                                     {
                                         player.TSPlayer.SendInfoMessage("Giving back {0} {1}{2}(s)", 
                                             Math.Abs(ing.stack), (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
-                                        args.Handled = true;
                                         player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), item.prefix);
+                                        player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, item.prefix));
                                         fulfilledIngredient = ing;
+                                        args.Handled = true;
                                     }
                                     else
                                     {
                                         player.TSPlayer.SendInfoMessage("Dropped {0} {1}{2}(s)",
                                             stacks, (ing.prefix != 0) ? TShock.Utils.GetPrefixById(ing.prefix) + " " : "", ing.name);
-                                        args.Handled = true;
+                                        player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
                                         fulfilledIngredient = ing;
+                                        args.Handled = true;
                                     }
                                 }
                             }
+
                             if (fulfilledIngredient == null)
                                 return;
                             
-                            player.activeRecipe.ingredients.Remove(fulfilledIngredient);
+                            player.activeIngredients.Remove(fulfilledIngredient);
 
                             if (player.activeRecipe.ingredients.Count < 1)
                             {
-                                foreach (recItem pro in player.activeRecipe.products)
+                                foreach (RecItem pro in player.activeRecipe.products)
                                 {
                                     Item product = new Item();
                                     product.SetDefaults(pro.name);
@@ -186,6 +190,8 @@ namespace CommandRecipes
                                     player.TSPlayer.SendSuccessMessage("Received {0} {1}{2}(s)",
                                         pro.stack, (pro.prefix != 0) ? TShock.Utils.GetPrefixById(pro.prefix) + " " : "", product.name);
                                 }
+                                player.activeRecipe = null;
+                                player.droppedItems.Clear();
                                 player.TSPlayer.SendInfoMessage("Finished crafting.");
                             }
                         }
@@ -227,8 +233,18 @@ namespace CommandRecipes
             }
             if (args.Parameters[0] == "-quit")
             {
-                //return everything in player.droppedItems then clear
-
+                args.Player.SendInfoMessage("Returning dropped items...");
+                foreach (RecItem itm in player.droppedItems)
+                {
+                    Item item = new Item();
+                    item.SetDefaults(itm.name);
+                    args.Player.GiveItem(item.type, itm.name, item.width, item.height, itm.stack, itm.prefix);
+                    player.TSPlayer.SendInfoMessage("Returned {0} {1}{2}(s)",
+                                            itm.stack, (itm.prefix != 0) ? TShock.Utils.GetPrefixById(itm.prefix) + " " : "", itm.name);
+                }
+                player.activeRecipe = null;
+                player.droppedItems.Clear();
+                player.TSPlayer.SendInfoMessage("Successfully quit crafting.");
                 return;
             }
 
@@ -243,7 +259,12 @@ namespace CommandRecipes
                 {
                     if (str.ToLower() == rec.name.ToLower())
                     {
-                        player.activeRecipe = new Recipe(rec.name.ToString(), new List<recItem>(rec.ingredients), new List<recItem>(rec.products));
+                        player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
+                        rec.ingredients.ForEach((item) => 
+                        {
+                            player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
+                        });
+                        player.activeRecipe = new Recipe(rec.name, player.activeIngredients, rec.products);
                         break;
                     }
                 }
@@ -258,7 +279,7 @@ namespace CommandRecipes
         #endregion
 
         #region recConfigReload
-        public static void recReload(CommandArgs args)
+        public static void RecReload(CommandArgs args)
         {
             Utils.SetUpConfig();
             args.Player.SendInfoMessage("Attempted to reload the config file");
