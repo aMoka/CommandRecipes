@@ -213,7 +213,7 @@ namespace CommandRecipes
             var player = Utils.GetPlayer(args.Player.Index);
             if (args.Parameters.Count == 0)
             {
-                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craftr <recipe/-quit/-list/-cat>");
+                args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craftr <recipe/-quit/-list/-allcats/-cat>");
                 return;
             }
 
