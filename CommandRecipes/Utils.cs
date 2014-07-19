@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TShockAPI;
+using TShockAPI.DB;
 
 namespace CommandRecipes
 {
@@ -40,6 +41,28 @@ namespace CommandRecipes
                     (item.prefix != 0) ? CmdRec.prefixes[item.prefix] + " ": "", item.name, "(s)"));
             }
             return lActIngs;
+        }
+
+        public static bool CheckIfInRegion(TSPlayer plr, List<string> region)
+        {
+            if (region.Contains(""))
+                return true;
+
+            int count = 0;
+            foreach (string reg in region)
+            {
+                Region r = TShock.Regions.GetRegionByName(reg);
+
+                int minX = r.Area.X;
+                int minY = r.Area.Y;
+                int maxX = r.Area.X + r.Area.Width;
+                int maxY = r.Area.Y + r.Area.Height;
+                if (plr.TileX < minX || plr.TileY < minY || plr.TileX > maxX || plr.TileY > maxY)
+                    count++;
+            }
+            if (count == region.Count)
+                return false;
+            return true;
         }
 
         #region SetUpConfig

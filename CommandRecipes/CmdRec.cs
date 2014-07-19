@@ -9,6 +9,7 @@ using System.ComponentModel;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
+using TShockAPI.DB;
 
 namespace CommandRecipes
 {
@@ -309,6 +310,12 @@ namespace CommandRecipes
                             if (!rec.permissions.Contains("") && !args.Player.Group.permissions.Intersect(rec.permissions).Any())
                             {
                             args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
+                                return;
+                            }
+
+                            if (!Utils.CheckIfInRegion(args.Player, rec.regions))
+                            {
+                                args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
                                 return;
                             }
 
