@@ -28,12 +28,16 @@ namespace CommandRecipes
         public string name;
         public List<RecItem> ingredients;
         public List<RecItem> products;
+        public List<string> categories = new List<string>();
+        public List<string> permissions = new List<string>();
 
-        public Recipe(string name, List<RecItem> ingredients, List<RecItem> products)
+        public Recipe(string name, List<RecItem> ingredients, List<RecItem> products, List<string> categories = null, List<string> permissions = null)
         {
             this.name = name;
             this.ingredients = ingredients;
             this.products = products;
+            this.categories = categories;
+            this.permissions = permissions;
         }
     }
 
@@ -76,10 +80,12 @@ namespace CommandRecipes
                 Recipes = new List<Recipe>();
                 Recipes.Add(new Recipe("Copper Broadsword",
                     new List<RecItem>() { new RecItem("Copper Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
-                    new List<RecItem>() { new RecItem("Copper Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) }));
+                    new List<RecItem>() { new RecItem("Copper Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) }, 
+                    new List<string> { "Example" }, new List<string> { "" }));
                 Recipes.Add(new Recipe("Iron Broadsword",
                     new List<RecItem>() { new RecItem("Iron Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
-                    new List<RecItem>() { new RecItem("Iron Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) }));
+                    new List<RecItem>() { new RecItem("Iron Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) },
+                    new List<string> { "Example", "Example2" }, new List<string> { "cmdrec.craft.example", "craft" }));
             }
 
             var str = JsonConvert.SerializeObject(this, Formatting.Indented);
