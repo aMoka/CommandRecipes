@@ -23,6 +23,7 @@ namespace CommandRecipes
         public static RecConfig config { get; set; }
         public static string configDir { get { return Path.Combine(TShock.SavePath, "PluginConfigs"); } }
         public static string configPath { get { return Path.Combine(configDir, "AllRecipes.json"); } }
+		public ILog Log { get; set; }
 
         #region Info
         public override string Name
@@ -53,6 +54,8 @@ namespace CommandRecipes
             ServerApi.Hooks.NetGreetPlayer.Register(this, OnGreet);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
             ServerApi.Hooks.NetGetData.Register(this, OnGetData);
+
+			Log.Initialize();
         }
         #endregion
 
@@ -65,6 +68,8 @@ namespace CommandRecipes
                 ServerApi.Hooks.NetGreetPlayer.Deregister(this, OnGreet);
                 ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
                 ServerApi.Hooks.NetGetData.Deregister(this, OnGetData);
+
+				Log.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -76,6 +81,7 @@ namespace CommandRecipes
             Order = -10;
 
             config = new RecConfig();
+			Log = new ILog();
         }
 
         #region OnInitialize
