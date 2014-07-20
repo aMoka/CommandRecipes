@@ -120,14 +120,17 @@ namespace CommandRecipes
 
         #region Helper Methods
         #region ParseToString
-        List<string> ParseToString(List<RecItem> items)
+        List<string> FormatItems(List<RecItem> items)
         {
             var list = new List<string>();
+			string prefix;
             foreach (var item in items)
             {
+				prefix = item.prefix > 0 ? String.Format("[{0}] ",
+					Utils.GetPrefixById(item.prefix)) : "";
                 list.Add(String.Format("{0} {1}{2}",
                     item.stack,
-                    CmdRec.prefixes.ContainsKey(item.prefix) ? CmdRec.prefixes[item.prefix] + " " : "",
+                    prefix,
                     item.name));
             }
             return list;
@@ -158,6 +161,11 @@ namespace CommandRecipes
                         pos = ReadMode.Name;
                         break;
                     default:
+						if (Char.IsWhiteSpace(ch) && pos != ReadMode.Name)
+						{
+							pos = ReadMode.Name;
+							break;
+						}
                         switch (pos)
                         {
                             case ReadMode.Stack:
@@ -176,7 +184,7 @@ namespace CommandRecipes
             // Additional one for the last item
             list.Add(new RecItem(
                 name.Trim(),
-                Int32.Parse(stack),
+                Int32.Parse(stack.Trim()),
                 TShock.Utils.GetPrefixByName(prefix.Trim()).First()));
             return list;
         }
@@ -186,10 +194,8 @@ namespace CommandRecipes
         {
             bool reading = false;
             int pos = 0;
-            // Last one is useless, it's there for the "(s)", pretty much
             var reader = new[]
                 {
-                    String.Empty,
                     String.Empty,
                     String.Empty,
                     String.Empty,

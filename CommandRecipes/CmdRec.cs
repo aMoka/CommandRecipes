@@ -19,7 +19,7 @@ namespace CommandRecipes
         public static List<string> cats = new List<string>();
         public static List<string> recs = new List<string>();
         public static List<RecPlayer> RPlayers = new List<RecPlayer>();
-        public static Dictionary<int, string> prefixes = new Dictionary<int, string>();
+		//public static Dictionary<int, string> prefixes = new Dictionary<int, string>();
         public static RecConfig config { get; set; }
         public static string configDir { get { return Path.Combine(TShock.SavePath, "PluginConfigs"); } }
         public static string configPath { get { return Path.Combine(configDir, "AllRecipes.json"); } }
@@ -94,7 +94,7 @@ namespace CommandRecipes
                     HelpText = "Reloads AllRecipes.json"
                 });
 
-            Utils.AddToPrefixes();
+			//Utils.AddToPrefixes();
             Utils.SetUpConfig();
 			Log.Initialize();
         }
@@ -158,16 +158,15 @@ namespace CommandRecipes
 
                                     if (ing.stack > 0)
                                     {
-                                        player.TSPlayer.SendInfoMessage("Drop another {0} {1}{2}(s).",
-                                            ing.stack, (ing.prefix != 0) ? prefixes[ing.prefix] + " " : "", ing.name);
+                                        player.TSPlayer.SendInfoMessage("Drop another {0}.", Utils.FormatItem((Item)ing));
                                         player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
                                         args.Handled = true;
                                         return;
                                     }
                                     else if (ing.stack < 0)
                                     {
-                                        player.TSPlayer.SendInfoMessage("Giving back {0} {1}{2}(s)",
-                                            Math.Abs(ing.stack), (ing.prefix != 0) ? prefixes[ing.prefix] + " " : "", ing.name);
+										// All messages have periods now.
+										player.TSPlayer.SendInfoMessage("Giving back {0}.", Utils.FormatItem((Item)ing));
                                         player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), item.prefix);
                                         player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, item.prefix));
                                         fulfilledIngredient = ing;
@@ -175,8 +174,7 @@ namespace CommandRecipes
                                     }
                                     else
                                     {
-                                        player.TSPlayer.SendInfoMessage("Dropped {0} {1}{2}(s)",
-                                            stacks, (ing.prefix != 0) ? prefixes[ing.prefix] + " " : "", ing.name);
+                                        player.TSPlayer.SendInfoMessage("Dropped {0}.", Utils.FormatItem((Item)ing));
                                         player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
                                         fulfilledIngredient = ing;
                                         args.Handled = true;
@@ -193,11 +191,9 @@ namespace CommandRecipes
                             {
                                 foreach (RecItem pro in player.activeRecipe.products)
                                 {
-                                    Item product = new Item();
-                                    product.SetDefaults(pro.name);
+									var product = TShock.Utils.GetItemByName(pro.name).First();
                                     player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, pro.prefix);
-                                    player.TSPlayer.SendSuccessMessage("Received {0} {1}{2}(s)",
-                                        pro.stack, (pro.prefix != 0) ? prefixes[pro.prefix] + " " : "", product.name);
+                                    player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
                                     Console.WriteLine(pro.prefix.ToString());
                                 }
                                 player.activeRecipe = null;
@@ -294,8 +290,7 @@ namespace CommandRecipes
                         Item item = new Item();
                         item.SetDefaults(itm.name);
                         args.Player.GiveItem(item.type, itm.name, item.width, item.height, itm.stack, itm.prefix);
-                        player.TSPlayer.SendInfoMessage("Returned {0} {1}{2}(s)",
-                                                itm.stack, (itm.prefix != 0) ? prefixes[itm.prefix] + " " : "", itm.name);
+						player.TSPlayer.SendInfoMessage("Returned {0}.", Utils.FormatItem((Item)itm));
                     }
                     player.activeRecipe = null;
                     player.droppedItems.Clear();

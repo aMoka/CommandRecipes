@@ -22,6 +22,21 @@ namespace CommandRecipes
             this.stack = stack;
             this.prefix = prefix;
         }
+
+		// Operators for explicit conversions
+		public static explicit operator Terraria.Item(RecItem item)
+		{
+			var titem = new Terraria.Item();
+			titem.SetDefaults(item.name);
+			titem.stack = item.stack;
+			titem.prefix = (byte)item.prefix;
+			return titem;
+		}
+
+		public static explicit operator RecItem(Terraria.Item item)
+		{
+			return new RecItem(item.name, item.stack, item.prefix);
+		}
     }
 
     public class Recipe
