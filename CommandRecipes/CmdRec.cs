@@ -54,8 +54,6 @@ namespace CommandRecipes
             ServerApi.Hooks.NetGreetPlayer.Register(this, OnGreet);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
             ServerApi.Hooks.NetGetData.Register(this, OnGetData);
-
-			Log.Initialize();
         }
         #endregion
 
@@ -85,7 +83,7 @@ namespace CommandRecipes
         }
 
         #region OnInitialize
-        public static void OnInitialize(EventArgs args)
+        void OnInitialize(EventArgs args)
         {
             Commands.ChatCommands.Add(new Command("cmdrec.player.craft", Craft, "craftr")
                 {
@@ -98,11 +96,12 @@ namespace CommandRecipes
 
             Utils.AddToPrefixes();
             Utils.SetUpConfig();
+			Log.Initialize();
         }
         #endregion
 
         #region OnGreet
-        public static void OnGreet(GreetPlayerEventArgs args)
+        void OnGreet(GreetPlayerEventArgs args)
         {
             RPlayers.Add(new RecPlayer(args.Who));
 
@@ -112,7 +111,7 @@ namespace CommandRecipes
         #endregion
 
         #region OnLeave
-        private void OnLeave(LeaveEventArgs args)
+        void OnLeave(LeaveEventArgs args)
         {
             var player = Utils.GetPlayer(args.Who);
 
@@ -121,7 +120,7 @@ namespace CommandRecipes
         #endregion
 
         #region OnGetData
-        public static void OnGetData(GetDataEventArgs args)
+        void OnGetData(GetDataEventArgs args)
         {
             if (args.MsgID == PacketTypes.ItemDrop)
             {
@@ -214,7 +213,7 @@ namespace CommandRecipes
 
         #region Commands
         #region Craft
-        public static void Craft(CommandArgs args)
+        void Craft(CommandArgs args)
         {
             var player = Utils.GetPlayer(args.Player.Index);
             if (args.Parameters.Count == 0)
