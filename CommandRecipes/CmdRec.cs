@@ -33,7 +33,7 @@ namespace CommandRecipes
 
         public override string Author
         {
-            get { return "aMoka"; }
+            get { return "aMoka and Enerdy"; }
         }
 
         public override string Description
