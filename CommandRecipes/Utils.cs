@@ -10,60 +10,60 @@ using TShockAPI.DB;
 
 namespace CommandRecipes
 {
-    public class Utils
-    {
-        public static List<RecPlayer> GetPlayerList(string name)
-        {
-            foreach (RecPlayer player in CmdRec.RPlayers)
-            {
-                if (player.name.ToLower().Contains(name.ToLower()))
-                {
-                    return new List<RecPlayer>() { player };
-                }
-            }
-            return new List<RecPlayer>();
-        }
+	public class Utils
+	{
+		public static List<RecPlayer> GetPlayerList(string name)
+		{
+			foreach (RecPlayer player in CmdRec.RPlayers)
+			{
+				if (player.name.ToLower().Contains(name.ToLower()))
+				{
+					return new List<RecPlayer>() { player };
+				}
+			}
+			return new List<RecPlayer>();
+		}
 
-        public static RecPlayer GetPlayer(int index)
-        {
-            foreach (RecPlayer player in CmdRec.RPlayers)
-                if (player.Index == index)
-                    return player;
+		public static RecPlayer GetPlayer(int index)
+		{
+			foreach (RecPlayer player in CmdRec.RPlayers)
+				if (player.Index == index)
+					return player;
 
-            return null;
-        }
+			return null;
+		}
 
-        public static List<string> ListIngredients(List<RecItem> actIngs)
-        {
-            List<string> lActIngs = new List<string>();
-            foreach (RecItem item in actIngs)
-            {
-                lActIngs.Add(FormatItem((Item)item));
-            }
-            return lActIngs;
-        }
+		public static List<string> ListIngredients(List<RecItem> actIngs)
+		{
+			List<string> lActIngs = new List<string>();
+			foreach (RecItem item in actIngs)
+			{
+				lActIngs.Add(FormatItem((Item)item));
+			}
+			return lActIngs;
+		}
 
-        public static bool CheckIfInRegion(TSPlayer plr, List<string> region)
-        {
-            if (region.Contains(""))
-                return true;
+		public static bool CheckIfInRegion(TSPlayer plr, List<string> region)
+		{
+			if (region.Contains(""))
+				return true;
 
-            int count = 0;
-            foreach (string reg in region)
-            {
-                Region r = TShock.Regions.GetRegionByName(reg);
+			int count = 0;
+			foreach (string reg in region)
+			{
+				Region r = TShock.Regions.GetRegionByName(reg);
 
-                int minX = r.Area.X;
-                int minY = r.Area.Y;
-                int maxX = r.Area.X + r.Area.Width;
-                int maxY = r.Area.Y + r.Area.Height;
-                if (plr.TileX < minX || plr.TileY < minY || plr.TileX > maxX || plr.TileY > maxY)
-                    count++;
-            }
-            if (count == region.Count)
-                return false;
-            return true;
-        }
+				int minX = r.Area.X;
+				int minY = r.Area.Y;
+				int maxX = r.Area.X + r.Area.Width;
+				int maxY = r.Area.Y + r.Area.Height;
+				if (plr.TileX < minX || plr.TileY < minY || plr.TileX > maxX || plr.TileY > maxY)
+					count++;
+			}
+			if (count == region.Count)
+				return false;
+			return true;
+		}
 
 		public static bool CheckIfInRegion2(TSPlayer plr, List<string> region)
 		{
@@ -80,40 +80,40 @@ namespace CommandRecipes
 			return false;
 		}
 
-        #region SetUpConfig
-        public static void SetUpConfig()
-        {
-            try
-            {
-                if (!Directory.Exists(CmdRec.configDir))
-                    Directory.CreateDirectory(CmdRec.configDir);
+		#region SetUpConfig
+		public static void SetUpConfig()
+		{
+			try
+			{
+				if (!Directory.Exists(CmdRec.configDir))
+					Directory.CreateDirectory(CmdRec.configDir);
 
-                if (File.Exists(CmdRec.configPath))
-                    CmdRec.config = RecConfig.Read(CmdRec.configPath);
-                else
-                    CmdRec.config.Write(CmdRec.configPath);
+				if (File.Exists(CmdRec.configPath))
+					CmdRec.config = RecConfig.Read(CmdRec.configPath);
+				else
+					CmdRec.config.Write(CmdRec.configPath);
 
-                foreach (Recipe rec in CmdRec.config.Recipes)
-                {
-                    if (!CmdRec.recs.Contains(rec.name.ToLower()))
-                        CmdRec.recs.Add(rec.name.ToLower());
-                    rec.categories.ForEach((item) =>
-                    {
-                        CmdRec.cats.Add(item.ToLower());
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
+				foreach (Recipe rec in CmdRec.config.Recipes)
+				{
+					if (!CmdRec.recs.Contains(rec.name.ToLower()))
+						CmdRec.recs.Add(rec.name.ToLower());
+					rec.categories.ForEach((item) =>
+					{
+						CmdRec.cats.Add(item.ToLower());
+					});
+				}
+			}
+			catch (Exception ex)
+			{
 				// Why were you using this instead of Log.ConsoleError?
 				//Console.ForegroundColor = ConsoleColor.Red;
 				//Console.WriteLine("Error in recConfig.json!");
 				//Console.ResetColor();
 				Log.ConsoleError("Error in recConfig.json!");
 				Log.ConsoleError(ex.ToString());
-            }
-        }
-        #endregion
+			}
+		}
+		#endregion
 
 		#region GetPrefixById
 		// Required until everyone gets their TShock updated

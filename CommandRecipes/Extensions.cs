@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace CommandRecipes
 {
-    public static class Extensions
-    {
-        public static RecPlayer AddToList(this List<RecPlayer> list, RecPlayer item)
-        {
-            if (!list.Contains(item))
-                list.Add(item);
-            return item;
-        }
+	public static class Extensions
+	{
+		public static RecPlayer AddToList(this List<RecPlayer> list, RecPlayer item)
+		{
+			if (!list.Contains(item))
+				list.Add(item);
+			return item;
+		}
 
 		public static void AddToList(this Dictionary<string, List<Recipe>> dic, KeyValuePair<string, Recipe> pair)
 		{
@@ -37,5 +37,5 @@ namespace CommandRecipes
 			}
 			return false;
 		}
-    }
+	}
 }
