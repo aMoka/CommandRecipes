@@ -10,7 +10,7 @@ using TShockAPI;
 
 namespace CommandRecipes
 {
-    public class ILog : IDisposable
+    public class ILog
     {
         public ILog()
         {
@@ -36,9 +36,7 @@ namespace CommandRecipes
         #region Dispose
         public void Dispose()
         {
-            Stream.Dispose();
-			Reader.Dispose();
-            Writer.Dispose();
+			Writer.Dispose();
         }
         #endregion
 
@@ -63,26 +61,25 @@ namespace CommandRecipes
         /// <summary>
         /// Logs a crafted recipe to the log file.
         /// </summary>
-        public bool Recipe(Recipe recipe, string player)
+        public void Recipe(Recipe recipe, string player)
         {
-            try
-            {
-                var ingredients = String.Join(",", Utils.ListIngredients(recipe.ingredients));
-                var products = String.Join(",", Utils.ListIngredients(recipe.products));
-                var str = String.Format("Player ({0}) crafted recipe ({1}), using ({2}) and obtaining ({3}).",
-                    player,
-                    recipe.name,
-                    ingredients,
-                    products);
-                Writer.WriteLine(str);
+			try
+			{
+				var ingredients = String.Join(",", Utils.ListIngredients(recipe.ingredients));
+				var products = String.Join(",", Utils.ListIngredients(recipe.products));
+				var str = String.Format("Player ({0}) crafted recipe ({1}), using ({2}) and obtaining ({3}).",
+					player,
+					recipe.name,
+					ingredients,
+					products);
+				Writer.WriteLine(str);
+				CompletedRecipes.AddToList(new KeyValuePair<string, Recipe>(player, recipe));
 
-            }
-            catch (Exception ex)
-            {
-                Log.ConsoleError(ex.ToString());
-                return false;
-            }
-            return true;
+			}
+			catch (Exception ex)
+			{
+				Log.ConsoleError(ex.ToString());
+			}
         }
         #endregion
 
@@ -103,6 +100,7 @@ namespace CommandRecipes
                 }
                 dic[pair.Key].Add(pair.Value);
             }
+			Reader.DiscardBufferedData();
             return dic;
 
         }
@@ -190,7 +188,7 @@ namespace CommandRecipes
         }
         #endregion
         #region ParseLine
-        KeyValuePair<string,Recipe> ParseLine(string line)
+        KeyValuePair<string, Recipe> ParseLine(string line)
         {
             bool reading = false;
             int pos = 0;
@@ -221,7 +219,7 @@ namespace CommandRecipes
                 }
             }
 
-            return new KeyValuePair<string,Recipe>(
+            return new KeyValuePair<string, Recipe>(
                 reader[0],
                 new Recipe(reader[1], ParseItems(reader[2]), ParseItems(reader[3])));
         }
@@ -234,5 +232,5 @@ namespace CommandRecipes
             Prefix,
             Name
         }
-    }
+	}
 }

@@ -65,6 +65,21 @@ namespace CommandRecipes
             return true;
         }
 
+		public static bool CheckIfInRegion2(TSPlayer plr, List<string> region)
+		{
+			if (region.Contains(""))
+				return true;
+
+			Region r;
+			foreach (var reg in region)
+			{
+				r = TShock.Regions.GetRegionByName(reg);
+				if (r != null && r.InArea((int)plr.X, (int)plr.Y))
+					return true;
+			}
+			return false;
+		}
+
         #region SetUpConfig
         public static void SetUpConfig()
         {
@@ -88,13 +103,14 @@ namespace CommandRecipes
                     });
                 }
             }
-            catch
+            catch (Exception ex)
             {
 				// Why were you using this instead of Log.ConsoleError?
 				//Console.ForegroundColor = ConsoleColor.Red;
 				//Console.WriteLine("Error in recConfig.json!");
 				//Console.ResetColor();
 				Log.ConsoleError("Error in recConfig.json!");
+				Log.ConsoleError(ex.ToString());
             }
         }
         #endregion
@@ -111,10 +127,14 @@ namespace CommandRecipes
 		// Though it would be an interesting addition
 		public static string FormatItem(Item item)
 		{
-			string prefix = GetPrefixById(item.prefix) + " ";
+			string prefix = GetPrefixById(item.prefix);
+			if (prefix != "")
+			{
+				prefix += " ";
+			}
 			return String.Format("{0} {1}{2}(s)",
 				Math.Abs(item.stack),
-				prefix.Trim(),
+				prefix,
 				item.name);
 		}
 		#endregion

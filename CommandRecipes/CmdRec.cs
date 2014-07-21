@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
@@ -194,8 +195,8 @@ namespace CommandRecipes
 									var product = TShock.Utils.GetItemByName(pro.name).First();
                                     player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, pro.prefix);
                                     player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
-                                    Console.WriteLine(pro.prefix.ToString());
                                 }
+								Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
                                 player.activeRecipe = null;
                                 player.droppedItems.Clear();
                                 player.TSPlayer.SendInfoMessage("Finished crafting.");
@@ -307,13 +308,13 @@ namespace CommandRecipes
                     {
                         foreach (Recipe rec in config.Recipes)
                         {
-                            if (!rec.permissions.Contains("") && !args.Player.Group.permissions.Intersect(rec.permissions).Any())
+                            if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
                             {
                             args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
                                 return;
                             }
 
-                            if (!Utils.CheckIfInRegion(args.Player, rec.regions))
+                            if (!Utils.CheckIfInRegion2(args.Player, rec.regions))
                             {
                                 args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
                                 return;
@@ -322,10 +323,12 @@ namespace CommandRecipes
                             if (str.ToLower() == rec.name.ToLower())
                             {
                                 player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
-                                rec.ingredients.ForEach((item) =>
-                                {
-                                    player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
-                                });
+								// Why would we do this instead of AddRange?
+								//rec.ingredients.ForEach((item) =>
+								//{
+								//	player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
+								//});
+								player.activeIngredients.AddRange(rec.ingredients);
                                 player.activeRecipe = new Recipe(rec.name, player.activeIngredients, rec.products);
                                 break;
                             }

@@ -57,6 +57,17 @@ namespace CommandRecipes
             this.permissions = permissions;
             this.regions = regions;
         }
+
+		public static Recipe Clone(Recipe recipe)
+		{
+			return new Recipe(
+				recipe.name,
+				recipe.ingredients,
+				recipe.products,
+				recipe.categories,
+				recipe.permissions,
+				recipe.regions);
+		}
     }
 
     public class RecConfig
