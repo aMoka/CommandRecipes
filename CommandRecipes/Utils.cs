@@ -125,7 +125,7 @@ namespace CommandRecipes
 
 		#region FormatItem
 		// Though it would be an interesting addition
-		public static string FormatItem(Item item)
+		public static string FormatItem(Item item, int stacks = 0)
 		{
 			string prefix = GetPrefixById(item.prefix);
 			if (prefix != "")
@@ -133,7 +133,7 @@ namespace CommandRecipes
 				prefix += " ";
 			}
 			return String.Format("{0} {1}{2}(s)",
-				Math.Abs(item.stack),
+				(stacks == 0) ? Math.Abs(item.stack) : stacks,
 				prefix,
 				item.name);
 		}
