@@ -23,6 +23,14 @@ namespace CommandRecipes
 			this.prefix = prefix;
 		}
 
+		public static RecItem Clone(RecItem item)
+		{
+			return new RecItem(
+				item.name,
+				item.stack,
+				item.prefix);
+		}
+
 		// Operators for explicit conversions
 		public static explicit operator Terraria.Item(RecItem item)
 		{
