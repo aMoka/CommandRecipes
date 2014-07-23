@@ -24,7 +24,7 @@ namespace CommandRecipes
 		public static RecConfig config { get; set; }
 		public static string configDir { get { return Path.Combine(TShock.SavePath, "PluginConfigs"); } }
 		public static string configPath { get { return Path.Combine(configDir, "AllRecipes.json"); } }
-		public ILog Log { get; set; }
+		public RecipeLog Log { get; set; }
 
 		#region Info
 		public override string Name
@@ -80,7 +80,7 @@ namespace CommandRecipes
 			Order = -10;
 
 			config = new RecConfig();
-			Log = new ILog();
+			Log = new RecipeLog();
 		}
 
 		#region OnInitialize
@@ -196,7 +196,8 @@ namespace CommandRecipes
 									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, pro.prefix);
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
-								Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
+								//Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
+								Log.Recipe(Recipe.Clone(player.activeRecipe), player.name);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
 								player.TSPlayer.SendInfoMessage("Finished crafting.");
