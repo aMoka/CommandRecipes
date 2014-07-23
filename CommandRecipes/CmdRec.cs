@@ -175,7 +175,7 @@ namespace CommandRecipes
 									}
 									else
 									{
-										player.TSPlayer.SendInfoMessage("Dropped {0}.", Utils.FormatItem((Item)ing));
+										player.TSPlayer.SendInfoMessage("Dropped {0}.", Utils.FormatItem((Item)ing, stacks));
 										player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
 										fulfilledIngredient = ing;
 										args.Handled = true;
@@ -324,11 +324,11 @@ namespace CommandRecipes
 							{
 								player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
 								// Why would we do this instead of AddRange?
-								//rec.ingredients.ForEach((item) =>
-								//{
-								//	player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
-								//});
-								player.activeIngredients.AddRange(rec.ingredients);
+								rec.ingredients.ForEach((item) =>
+								{
+									player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
+								});
+								//player.activeIngredients.AddRange(rec.ingredients);
 								player.activeRecipe = new Recipe(rec.name, player.activeIngredients, rec.products);
 								break;
 							}
