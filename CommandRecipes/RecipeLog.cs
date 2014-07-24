@@ -152,6 +152,7 @@ namespace CommandRecipes
 				switch (ch)
 				{
 					case ',':
+						name = name.Replace("(s)", String.Empty);
 						list.Add(new RecItem(
 							name.Trim(),
 							Int32.Parse(stack),
@@ -185,6 +186,7 @@ namespace CommandRecipes
 				}
 			}
 			// Additional one for the last item
+			name = name.Replace("(s)", String.Empty);
 			list.Add(new RecItem(
 				name.Trim(),
 				Int32.Parse(stack.Trim()),
