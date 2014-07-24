@@ -137,6 +137,15 @@ namespace CommandRecipes
 				prefix,
 				item.name);
 		}
+		public static string LogFormatItem(Item item, int stacks = 0)
+		{
+			string str = GetPrefixById(item.prefix);
+			string prefix = str == "" ? "" : "[" + str + "] ";
+			return String.Format("{0} {1}{2}(s)",
+				(stacks == 0) ? Math.Abs(item.stack) : stacks,
+				prefix,
+				item.name);
+		}
 		#endregion
 
 		#region AddToPrefixes(old)

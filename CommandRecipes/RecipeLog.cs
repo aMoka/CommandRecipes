@@ -70,8 +70,12 @@ namespace CommandRecipes
 		{
 			try
 			{
-				var ingredients = String.Join(",", Utils.ListIngredients(recipe.ingredients));
-				var products = String.Join(",", Utils.ListIngredients(recipe.products));
+				var list = new List<string>();
+				recipe.ingredients.ForEach(i => list.Add(Utils.LogFormatItem((Item)i, i.stack)));
+				var ingredients = String.Join(",", list);
+				list.Clear();
+				recipe.products.ForEach(i => list.Add(Utils.LogFormatItem((Item)i, i.stack)));
+				var products = String.Join(",", list);
 				var str = String.Format("Player ({0}) crafted recipe ({1}), using ({2}) and obtaining ({3}).",
 					player,
 					recipe.name,
@@ -156,7 +160,7 @@ namespace CommandRecipes
 						list.Add(new RecItem(
 							name.Trim(),
 							Int32.Parse(stack),
-							TShock.Utils.GetPrefixByName(prefix.Trim()).First()));
+							prefix == "" ? 0 : TShock.Utils.GetPrefixByName(prefix.Trim()).First()));
 						break;
 					case '[':
 						pos = ReadMode.Prefix;
@@ -190,7 +194,7 @@ namespace CommandRecipes
 			list.Add(new RecItem(
 				name.Trim(),
 				Int32.Parse(stack.Trim()),
-				TShock.Utils.GetPrefixByName(prefix.Trim()).First()));
+				prefix == "" ? 0 : TShock.Utils.GetPrefixByName(prefix.Trim()).First()));
 			return list;
 		}
 		#endregion
