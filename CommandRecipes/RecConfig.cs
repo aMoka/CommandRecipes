@@ -23,12 +23,9 @@ namespace CommandRecipes
 			this.prefix = prefix;
 		}
 
-		public static RecItem Clone(RecItem item)
+		public RecItem Clone()
 		{
-			return new RecItem(
-				item.name,
-				item.stack,
-				item.prefix);
+			return MemberwiseClone() as RecItem;
 		}
 
 		// Operators for explicit conversions
@@ -47,7 +44,12 @@ namespace CommandRecipes
 		}
 	}
 
-	public class Recipe
+	public abstract class RecipeFactory
+	{
+		public abstract Recipe Clone();
+	}
+
+	public class Recipe : RecipeFactory
 	{
 		public string name;
 		public List<RecItem> ingredients;
@@ -66,15 +68,14 @@ namespace CommandRecipes
 			this.regions = regions;
 		}
 
-		public static Recipe Clone(Recipe recipe)
+		public override Recipe Clone()
 		{
-			return new Recipe(
-				recipe.name,
-				recipe.ingredients,
-				recipe.products,
-				recipe.categories,
-				recipe.permissions,
-				recipe.regions);
+			var clone = (Recipe)MemberwiseClone();
+			clone.ingredients = new List<RecItem>(ingredients.Count);
+			clone.products = new List<RecItem>(products.Count);
+			ingredients.ForEach(i => clone.ingredients.Add(i.Clone()));
+			products.ForEach(i => clone.products.Add(i.Clone()));
+			return clone;
 		}
 	}
 

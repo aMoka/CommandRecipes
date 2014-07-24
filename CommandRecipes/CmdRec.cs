@@ -86,7 +86,7 @@ namespace CommandRecipes
 		#region OnInitialize
 		void OnInitialize(EventArgs args)
 		{
-			Commands.ChatCommands.Add(new Command("cmdrec.player.craft", Craft, "craftr")
+			Commands.ChatCommands.Add(new Command("cmdrec.player.craft", Craft, "craft")
 				{
 					HelpText = "Allows the player to craft items via command from config-defined recipes."
 				});
@@ -188,7 +188,7 @@ namespace CommandRecipes
 
 							player.activeIngredients.Remove(fulfilledIngredient);
 
-							if (player.activeRecipe.ingredients.Count < 1)
+							if (player.activeIngredients.Count < 1)
 							{
 								foreach (RecItem pro in player.activeRecipe.products)
 								{
@@ -197,7 +197,7 @@ namespace CommandRecipes
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
 								//Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
-								Log.Recipe(Recipe.Clone(player.activeRecipe), player.name);
+								Log.Recipe(player.activeRecipe, player.name);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
 								player.TSPlayer.SendInfoMessage("Finished crafting.");
@@ -216,7 +216,7 @@ namespace CommandRecipes
 			var player = Utils.GetPlayer(args.Player.Index);
 			if (args.Parameters.Count == 0)
 			{
-				args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craftr <recipe/-quit/-list/-allcats/-cat>");
+				args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craft <recipe/-quit/-list/-allcats/-cat>");
 				return;
 			}
 
@@ -236,7 +236,7 @@ namespace CommandRecipes
 						new PaginationTools.Settings
 						{
 							HeaderFormat = "Recipes ({0}/{1}):",
-							FooterFormat = "Type /craftr -list {0} for more.",
+							FooterFormat = "Type /craft -list {0} for more.",
 							NothingToDisplayString = "There are currently no recipes defined!"
 						});
 					return;
@@ -252,7 +252,7 @@ namespace CommandRecipes
 						new PaginationTools.Settings
 						{
 							HeaderFormat = "Recipe Categories ({0}/{1}):",
-							FooterFormat = "Type /craftr -cat {0} for more.",
+							FooterFormat = "Type /craft -cat {0} for more.",
 							NothingToDisplayString = "There are currently no categories defined!"
 						});
 					return;
@@ -324,13 +324,11 @@ namespace CommandRecipes
 							if (str.ToLower() == rec.name.ToLower())
 							{
 								player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
-								// Why would we do this instead of AddRange?
 								rec.ingredients.ForEach((item) =>
 								{
-									player.activeIngredients.Add(new RecItem(item.name, item.stack, item.prefix));
+									player.activeIngredients.Add(item.Clone());
 								});
-								//player.activeIngredients.AddRange(rec.ingredients);
-								player.activeRecipe = new Recipe(rec.name, player.activeIngredients, rec.products);
+								player.activeRecipe = rec.Clone();
 								break;
 							}
 						}
