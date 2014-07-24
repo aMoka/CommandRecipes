@@ -16,7 +16,7 @@ namespace CommandRecipes
 		public int stack;
 		public int prefix;
 
-		public RecItem(string name, int stack, int prefix = 0)
+		public RecItem(string name, int stack, int prefix = -1)
 		{
 			this.name = name;
 			this.stack = stack;

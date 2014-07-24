@@ -33,7 +33,8 @@ namespace CommandRecipes
 			Writer = new StreamWriter(_ostream);
 			Reader = new StreamReader(_istream);
 			//Task.Factory.StartNew(() => Load());
-			Load();
+			//Load();
+			CompletedRecipes = new Dictionary<string, List<Recipe>>();
 		}
 		#endregion
 

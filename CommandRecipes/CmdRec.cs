@@ -153,14 +153,15 @@ namespace CommandRecipes
 							RecItem fulfilledIngredient = null;
 							foreach (RecItem ing in player.activeIngredients)
 							{
-								if (ing.name == item.name && (ing.prefix != 0 || ing.prefix == item.prefix))
+								//ing.prefix == -1 means accepts any prefix
+								if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == prefix))
 								{
 									ing.stack -= stacks;
 
 									if (ing.stack > 0)
 									{
 										player.TSPlayer.SendInfoMessage("Drop another {0}.", Utils.FormatItem((Item)ing));
-										player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
+										player.droppedItems.Add(new RecItem(item.name, stacks, prefix));
 										args.Handled = true;
 										return;
 									}
@@ -168,15 +169,15 @@ namespace CommandRecipes
 									{
 										// All messages have periods now.
 										player.TSPlayer.SendInfoMessage("Giving back {0}.", Utils.FormatItem((Item)ing));
-										player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), item.prefix);
-										player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, item.prefix));
+										player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), prefix);
+										player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, prefix));
 										fulfilledIngredient = ing;
 										args.Handled = true;
 									}
 									else
 									{
 										player.TSPlayer.SendInfoMessage("Dropped {0}.", Utils.FormatItem((Item)ing, stacks));
-										player.droppedItems.Add(new RecItem(item.name, stacks, item.prefix));
+										player.droppedItems.Add(new RecItem(item.name, stacks, prefix));
 										fulfilledIngredient = ing;
 										args.Handled = true;
 									}
@@ -192,12 +193,15 @@ namespace CommandRecipes
 							{
 								foreach (RecItem pro in player.activeRecipe.products)
 								{
-									var product = TShock.Utils.GetItemByName(pro.name).First();
-									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, pro.prefix);
+									Item product = new Item();
+									product.SetDefaults(pro.name);
+									//itm.Prefix(-1) means at least a 25% chance to hit prefix = 0. if < -1, even chances. 
+									product.Prefix(pro.prefix);
+									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
 								//Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
-								Log.Recipe(player.activeRecipe, player.name);
+								Log.Recipe(player.activeRecipe.Clone(), player.name);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
 								player.TSPlayer.SendInfoMessage("Finished crafting.");
