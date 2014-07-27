@@ -188,6 +188,11 @@ namespace CommandRecipes
 								return;
 
 							player.activeIngredients.Remove(fulfilledIngredient);
+							foreach (RecItem ing in player.activeRecipe.ingredients)
+							{
+								if (ing.name == item.name && ing.prefix == -1)
+									ing.prefix = prefix;
+							}
 
 							if (player.activeIngredients.Count < 1)
 							{
@@ -197,6 +202,7 @@ namespace CommandRecipes
 									product.SetDefaults(pro.name);
 									//itm.Prefix(-1) means at least a 25% chance to hit prefix = 0. if < -1, even chances. 
 									product.Prefix(pro.prefix);
+									pro.prefix = product.prefix;
 									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
