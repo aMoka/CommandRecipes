@@ -151,12 +151,7 @@ namespace CommandRecipes
 					
 					foreach (RecPlayer player in RPlayers)
 					{
-						double plrX = Math.Ceiling(player.TSPlayer.X / 16);
-						double plrY = Math.Ceiling(player.TSPlayer.Y / 16);
-						double itmX = Math.Ceiling(posx / 16);
-						double itmY = Math.Floor(posy / 16);
-
-						if (player.activeRecipe != null && (plrX - itmX) <= 1 && (plrY - itmY) <= 1)
+						if (player.activeRecipe != null && player.Index == args.Msg.whoAmI)
 						{
 							RecItem fulfilledIngredient = null;
 							foreach (RecItem ing in player.activeIngredients)
