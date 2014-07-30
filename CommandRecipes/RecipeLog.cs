@@ -205,12 +205,12 @@ namespace CommandRecipes
 			bool reading = false;
 			int pos = 0;
 			var reader = new[]
-                {
-                    String.Empty,
-                    String.Empty,
-                    String.Empty,
-                    String.Empty
-                };
+				{
+					String.Empty,
+					String.Empty,
+					String.Empty,
+					String.Empty
+				};
 			foreach (char ch in line)
 			{
 				switch (ch)

@@ -123,6 +123,9 @@ namespace CommandRecipes
 		#region OnGetData
 		void OnGetData(GetDataEventArgs args)
 		{
+			if (config.CraftFromInventory)
+				return;
+
 			if (args.MsgID == PacketTypes.ItemDrop)
 			{
 				if (args.Handled)
@@ -145,10 +148,15 @@ namespace CommandRecipes
 
 					if (id == 0)
 						return;
-
+					
 					foreach (RecPlayer player in RPlayers)
 					{
-						if (player.activeRecipe != null)
+						double plrX = Math.Ceiling(player.TSPlayer.X / 16);
+						double plrY = Math.Ceiling(player.TSPlayer.Y / 16);
+						double itmX = Math.Ceiling(posx / 16);
+						double itmY = Math.Floor(posy / 16);
+
+						if (player.activeRecipe != null && (plrX - itmX) <= 1 && (plrY - itmY) <= 1)
 						{
 							RecItem fulfilledIngredient = null;
 							foreach (RecItem ing in player.activeIngredients)
@@ -206,7 +214,6 @@ namespace CommandRecipes
 									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
-								//Task.Factory.StartNew(() => Log.Recipe(Recipe.Clone(player.activeRecipe), player.name));
 								Log.Recipe(player.activeRecipe.Clone(), player.name);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
@@ -223,10 +230,12 @@ namespace CommandRecipes
 		#region Craft
 		void Craft(CommandArgs args)
 		{
+			Item item;
 			var player = Utils.GetPlayer(args.Player.Index);
 			if (args.Parameters.Count == 0)
 			{
-				args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craft <recipe/-quit/-list/-allcats/-cat>");
+				args.Player.SendErrorMessage("Invalid syntax! Proper syntax: /craft <recipe/-quit/-list/-allcats/-cat{0}>",
+					(config.CraftFromInventory) ? "/-confirm" : "");
 				return;
 			}
 
@@ -257,7 +266,7 @@ namespace CommandRecipes
 
 					List<string> allCat = new List<string>();
 					foreach (Recipe rec in CmdRec.config.Recipes)
-						rec.categories.ForEach((item) => { allCat.Add(item); });
+						rec.categories.ForEach(i => { allCat.Add(i); });
 					PaginationTools.SendPage(args.Player, 1, PaginationTools.BuildLinesFromTerms(allCat),
 						new PaginationTools.Settings
 						{
@@ -285,9 +294,9 @@ namespace CommandRecipes
 						List<string> catrec = new List<string>();
 						foreach (Recipe rec in config.Recipes)
 						{
-							rec.categories.ForEach((item) =>
+							rec.categories.ForEach(i =>
 							{
-								if (cat.ToLower() == item.ToLower())
+								if (cat.ToLower() == i.ToLower())
 									catrec.Add(rec.name);
 							});
 						}
@@ -299,7 +308,7 @@ namespace CommandRecipes
 					args.Player.SendInfoMessage("Returning dropped items...");
 					foreach (RecItem itm in player.droppedItems)
 					{
-						Item item = new Item();
+						item = new Item();
 						item.SetDefaults(itm.name);
 						args.Player.GiveItem(item.type, itm.name, item.width, item.height, itm.stack, itm.prefix);
 						player.TSPlayer.SendInfoMessage("Returned {0}.", Utils.FormatItem((Item)itm));
@@ -308,53 +317,122 @@ namespace CommandRecipes
 					player.droppedItems.Clear();
 					player.TSPlayer.SendInfoMessage("Successfully quit crafting.");
 					return;
+				case "-confirm":
+					if (!config.CraftFromInventory)
+					{
+						args.Player.SendErrorMessage("Crafting from inventory is disabled!");
+					}
+					int count = 0;
+					foreach (RecItem ing in player.activeIngredients)
+					{
+						//go backwards through inventory, because hotbar stuff is generally valuable?
+						for (var i = 58; i >= 0; i--)
+						{
+							item = args.TPlayer.inventory[i];
+							if (!args.Player.InventorySlotAvailable)
+							{
+								args.Player.SendErrorMessage("Insufficient inventory space!");
+								player.activeRecipe = null;
+								return;
+							}
+
+							if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == item.prefix))
+							{
+								if (args.TPlayer.inventory[i].stack < ing.stack)
+								{
+									args.Player.SendErrorMessage("Insufficient amount of ingredients!");
+									foreach (RecItem itm in player.droppedItems)
+									{
+										Item m = new Item();
+										m.SetDefaults(itm.name);
+										args.Player.GiveItem(m.type, m.name, m.width, m.height, itm.stack, itm.prefix);
+									}
+									player.activeRecipe = null;
+									player.droppedItems.Clear();
+									return;
+								}
+								player.droppedItems.Add(new RecItem(ing.name, ing.stack, args.TPlayer.inventory[i].prefix));
+								args.TPlayer.inventory[i].stack -= ing.stack;
+								ing.stack = 0;
+								NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", args.Player.Index, i);
+								count++;
+								foreach (RecItem ingr in player.activeRecipe.ingredients)
+								{
+									if (ingr.name == item.name && ingr.prefix == -1)
+										ingr.prefix = args.TPlayer.inventory[i].prefix;
+								}
+								break;
+							}
+						}
+					}
+					if (count < player.activeRecipe.ingredients.Count)
+						return;
+					
+					foreach (RecItem pro in player.activeRecipe.products)
+					{
+						Item product = new Item();
+						product.SetDefaults(pro.name);
+						product.Prefix(pro.prefix);
+						pro.prefix = product.prefix;
+						player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
+						player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
+					}
+					Log.Recipe(player.activeRecipe.Clone(), player.name);
+					player.activeRecipe = null;
+					player.droppedItems.Clear();
+					player.TSPlayer.SendInfoMessage("Finished crafting.");
+					return;
 				default:
+					if (player.activeRecipe != null)
+					{
+						args.Player.SendErrorMessage("You must finish crafting or quit your current recipe!");
+						return;
+					}
 					string str = string.Join(" ", args.Parameters);
 					if (!recs.Contains(str.ToLower()))
 					{
 						args.Player.SendErrorMessage("Invalid recipe!");
 						return;
 					}
-					else
+					foreach (Recipe rec in config.Recipes)
 					{
-						foreach (Recipe rec in config.Recipes)
+						if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
 						{
-							if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
-							{
-								args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
-								return;
-							}
-
-							if (!Utils.CheckIfInRegion2(args.Player, rec.regions))
-							{
-								args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
-								return;
-							}
-
-							if (str.ToLower() == rec.name.ToLower())
-							{
-								player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
-								rec.ingredients.ForEach((item) =>
-								{
-									player.activeIngredients.Add(item.Clone());
-								});
-								player.activeRecipe = rec.Clone();
-								break;
-							}
+							args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
+							return;
 						}
-						if (player.activeRecipe != null)
+
+						if (!Utils.CheckIfInRegion2(args.Player, rec.regions))
 						{
-							List<string> inglist = Utils.ListIngredients(player.activeRecipe.ingredients);
-							args.Player.SendInfoMessage("The {0} recipe requires {1} to craft. Please drop all required items.", player.activeRecipe.name,
-								String.Join(", ", inglist.ToArray(), 0, inglist.Count - 1) + ", and " + inglist.LastOrDefault());
+							args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
+							return;
 						}
+
+						if (str.ToLower() == rec.name.ToLower())
+						{
+							player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
+							rec.ingredients.ForEach(i =>
+							{
+								player.activeIngredients.Add(i.Clone());
+							});
+							player.activeRecipe = rec.Clone();
+							break;
+						}
+					}
+					if (player.activeRecipe != null)
+					{
+						List<string> inglist = Utils.ListIngredients(player.activeRecipe.ingredients);
+						args.Player.SendInfoMessage("The {0} recipe requires {1} to craft. {2}", 
+							player.activeRecipe.name,
+							String.Join(", ", inglist.ToArray(), 0, inglist.Count - 1) + ", and " + inglist.LastOrDefault(),
+							(config.CraftFromInventory) ? "Type \"/craft -confirm\" to craft." : "Please drop all required items.");
 					}
 					break;
 			}
 		}
 		#endregion
 
-		#region recConfigReload
+		#region RecConfigReload
 		public static void RecReload(CommandArgs args)
 		{
 			Utils.SetUpConfig();

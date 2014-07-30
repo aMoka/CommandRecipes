@@ -81,6 +81,7 @@ namespace CommandRecipes
 
 	public class RecConfig
 	{
+		public bool CraftFromInventory = false;
 		public List<Recipe> Recipes;
 
 		public static RecConfig Read(string path)
@@ -117,11 +118,11 @@ namespace CommandRecipes
 			{
 				Recipes = new List<Recipe>();
 				Recipes.Add(new Recipe("Copper Broadsword",
-					new List<RecItem>() { new RecItem("Copper Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
+					new List<RecItem>() { new RecItem("Copper Bar", 8, 0), new RecItem("Stone Block", 20, 0), new RecItem("Wooden Hammer", 1, 0) },
 					new List<RecItem>() { new RecItem("Copper Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) },
 					new List<string> { "Example" }, new List<string> { "" }, new List<string> { "" }));
 				Recipes.Add(new Recipe("Iron Broadsword",
-					new List<RecItem>() { new RecItem("Iron Bar", 8), new RecItem("Stone Block", 20), new RecItem("Wooden Hammer", 1) },
+					new List<RecItem>() { new RecItem("Iron Bar", 8, 0), new RecItem("Stone Block", 20, 0), new RecItem("Wooden Hammer", 1, -1) },
 					new List<RecItem>() { new RecItem("Iron Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) },
 					new List<string> { "Example", "Example2" }, new List<string> { "cmdrec.craft.example", "craft" }, new List<string> { "" }));
 			}
