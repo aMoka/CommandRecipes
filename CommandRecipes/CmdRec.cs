@@ -261,7 +261,10 @@ namespace CommandRecipes
 
 					List<string> allCat = new List<string>();
 					foreach (Recipe rec in CmdRec.config.Recipes)
-						rec.categories.ForEach(i => { allCat.Add(i); });
+						rec.categories.ForEach(i => { 
+							if (!allCat.Contains(i))
+								allCat.Add(i); 
+						});
 					PaginationTools.SendPage(args.Player, 1, PaginationTools.BuildLinesFromTerms(allCat),
 						new PaginationTools.Settings
 						{
