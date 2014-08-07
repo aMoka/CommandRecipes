@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.Serialization;
-using TShockAPI.DB;
 using Newtonsoft.Json;
 
 namespace CommandRecipes
@@ -44,6 +43,82 @@ namespace CommandRecipes
 		}
 	}
 
+	public class Ingredient
+	{
+		public string name;
+		public int stack;
+		public int prefix;
+		public int group;
+
+		public Ingredient(string name, int stack, int prefix, int group)
+		{
+			this.name = name;
+			this.stack = stack;
+			this.prefix = prefix;
+			this.group = group;
+		}
+
+		public Ingredient Clone()
+		{
+			return MemberwiseClone() as Ingredient;
+		}
+
+		public static explicit operator Terraria.Item(Ingredient item)
+		{
+			var titem = new Terraria.Item();
+			titem.SetDefaults(item.name);
+			titem.stack = item.stack;
+			titem.prefix = (byte)item.prefix;
+			return titem;
+		}
+	}
+
+	public class Product
+	{
+		public string name;
+		public int stack;
+		public int prefix;
+		public int group;
+		public int weight;
+
+		public Product(string name, int stack, int prefix, int group, int weight)
+		{
+			this.name = name;
+			this.stack = stack;
+			this.prefix = prefix;
+			this.group = group;
+			this.weight = weight;
+		}
+
+		public Product Clone()
+		{
+			return MemberwiseClone() as Product;
+		}
+
+		public static explicit operator Terraria.Item(Product item)
+		{
+			var titem = new Terraria.Item();
+			titem.SetDefaults(item.name);
+			titem.stack = item.stack;
+			titem.prefix = (byte)item.prefix;
+			return titem;
+		}
+	}
+
+	public class LogRecipe
+	{
+		public string name;
+		public List<RecItem> ingredients;
+		public List<RecItem> products;
+
+		public LogRecipe(string name, List<RecItem> ingredients, List<RecItem> products)
+		{
+			this.name = name;
+			this.ingredients = ingredients;
+			this.products = products;
+		}
+	}
+
 	public abstract class RecipeFactory
 	{
 		public abstract Recipe Clone();
@@ -52,13 +127,13 @@ namespace CommandRecipes
 	public class Recipe : RecipeFactory
 	{
 		public string name;
-		public List<RecItem> ingredients;
-		public List<RecItem> products;
+		public List<Ingredient> ingredients;
+		public List<Product> products;
 		public List<string> categories = new List<string>();
 		public List<string> permissions = new List<string>();
 		public List<string> regions = new List<string>();
 
-		public Recipe(string name, List<RecItem> ingredients, List<RecItem> products, List<string> categories = null, List<string> permissions = null, List<string> regions = null)
+		public Recipe(string name, List<Ingredient> ingredients, List<Product> products, List<string> categories = null, List<string> permissions = null, List<string> regions = null)
 		{
 			this.name = name;
 			this.ingredients = ingredients;
@@ -71,8 +146,8 @@ namespace CommandRecipes
 		public override Recipe Clone()
 		{
 			var clone = (Recipe)MemberwiseClone();
-			clone.ingredients = new List<RecItem>(ingredients.Count);
-			clone.products = new List<RecItem>(products.Count);
+			clone.ingredients = new List<Ingredient>(ingredients.Count);
+			clone.products = new List<Product>(products.Count);
 			ingredients.ForEach(i => clone.ingredients.Add(i.Clone()));
 			products.ForEach(i => clone.products.Add(i.Clone()));
 			return clone;
@@ -118,13 +193,29 @@ namespace CommandRecipes
 			{
 				Recipes = new List<Recipe>();
 				Recipes.Add(new Recipe("Copper Broadsword",
-					new List<RecItem>() { new RecItem("Copper Bar", 8, 0), new RecItem("Stone Block", 20, 0), new RecItem("Wooden Hammer", 1, 0) },
-					new List<RecItem>() { new RecItem("Copper Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) },
-					new List<string> { "Example" }, new List<string> { "" }, new List<string> { "" }));
+					new List<Ingredient>() { 
+						new Ingredient("Copper Bar", 8, 0, 1), 
+						new Ingredient("Iron Bar", 8, 0, 1),
+						new Ingredient("Stone Block", 20, 0, 0), 
+						new Ingredient("Wooden Hammer", 1, 0, 0) },
+					new List<Product>() { 
+						new Product("Copper Broadsword", 1, 41, 1, 50), 
+						new Product("Copper Shortsword", 1, 41, 1, 50),
+						new Product("Wooden Hammer", 1, 39, 0, 100) },
+					new List<string> { "Example" }, 
+					new List<string> { "" }, 
+					new List<string> { "" }));
 				Recipes.Add(new Recipe("Iron Broadsword",
-					new List<RecItem>() { new RecItem("Iron Bar", 8, 0), new RecItem("Stone Block", 20, 0), new RecItem("Wooden Hammer", 1, -1) },
-					new List<RecItem>() { new RecItem("Iron Broadsword", 1, 41), new RecItem("Wooden Hammer", 1, 39) },
-					new List<string> { "Example", "Example2" }, new List<string> { "cmdrec.craft.example", "craft" }, new List<string> { "" }));
+					new List<Ingredient>() { 
+						new Ingredient("Iron Bar", 8, 0, 0), 
+						new Ingredient("Stone Block", 20, 0, 0), 
+						new Ingredient("Wooden Hammer", 1, -1, 0) },
+					new List<Product>() { 
+						new Product("Iron Broadsword", 1, 41, 0, 100), 
+						new Product("Wooden Hammer", 1, 39, 0, 100) },
+					new List<string> { "Example", "Example2" }, 
+					new List<string> { "cmdrec.craft.example", "craft" }, 
+					new List<string> { "" }));
 			}
 
 			var str = JsonConvert.SerializeObject(this, Formatting.Indented);

@@ -33,39 +33,68 @@ namespace CommandRecipes
 			return null;
 		}
 
-		public static List<string> ListIngredients(List<RecItem> actIngs)
+		public static List<string> ListIngredients(List<Ingredient> actIngs)
 		{
 			List<string> lActIngs = new List<string>();
-			foreach (RecItem item in actIngs)
+			List<int> groups = new List<int>();
+			foreach (Ingredient item in actIngs)
+				if (item.group == 0)
+					lActIngs.Add(FormatItem((Item)item));
+				else if(!groups.Contains(item.group))
+					groups.Add(item.group);
+
+			for (int i = 0; i < groups.Count; i++)
 			{
-				lActIngs.Add(FormatItem((Item)item));
+				List<string> lGrIng = new List<string>();
+				foreach (Ingredient item in actIngs)
+				{
+					if (groups[i] == item.group)
+						lGrIng.Add(FormatItem((Item)item));
+				}
+				lActIngs.Add(String.Join(" or ", lGrIng));
 			}
 			return lActIngs;
 		}
 
-		public static bool CheckIfInRegion(TSPlayer plr, List<string> region)
+		public static List<Product> DetermineProducts(List<Product> actPros)
 		{
-			if (region.Contains(""))
-				return true;
-
-			int count = 0;
-			foreach (string reg in region)
+			List<Product> lActPros = new List<Product>();
+			List<int> groups = new List<int>();
+			foreach (Product pro in actPros)
 			{
-				Region r = TShock.Regions.GetRegionByName(reg);
-
-				int minX = r.Area.X;
-				int minY = r.Area.Y;
-				int maxX = r.Area.X + r.Area.Width;
-				int maxY = r.Area.Y + r.Area.Height;
-				if (plr.TileX < minX || plr.TileY < minY || plr.TileX > maxX || plr.TileY > maxY)
-					count++;
+				if (pro.group == 0)
+					lActPros.Add(pro);
+				else if (!groups.Contains(pro.group))
+					groups.Add(pro.group);
 			}
-			if (count == region.Count)
-				return false;
-			return true;
+
+			for (int i = 0; i < groups.Count; i++)
+			{
+				List<Product> proPool = new List<Product>();
+				foreach (Product pro in actPros)
+				{
+					if (groups[i] == pro.group)
+						proPool.Add(pro);
+				}
+
+				Random r = new Random();
+				double diceRoll = r.Next(100);
+
+				int cumulative = 0;
+				for (int j = 0; j < proPool.Count; j++)
+				{
+					cumulative += (proPool[j].weight);
+				    if (diceRoll < cumulative)
+				    {
+						lActPros.Add(proPool[j]);
+				        break;
+				    }
+				}
+			}
+			return lActPros;
 		}
 
-		public static bool CheckIfInRegion2(TSPlayer plr, List<string> region)
+		public static bool CheckIfInRegion(TSPlayer plr, List<string> region)
 		{
 			if (region.Contains(""))
 				return true;

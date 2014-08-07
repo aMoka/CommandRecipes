@@ -153,8 +153,8 @@ namespace CommandRecipes
 					{
 						if (player.activeRecipe != null && player.Index == args.Msg.whoAmI)
 						{
-							RecItem fulfilledIngredient = null;
-							foreach (RecItem ing in player.activeIngredients)
+							List<Ingredient> fulfilledIngredient = new List<Ingredient>();
+							foreach (Ingredient ing in player.activeIngredients)
 							{
 								//ing.prefix == -1 means accepts any prefix
 								if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == prefix))
@@ -174,24 +174,29 @@ namespace CommandRecipes
 										player.TSPlayer.SendInfoMessage("Giving back {0}.", Utils.FormatItem((Item)ing));
 										player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), prefix);
 										player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, prefix));
-										fulfilledIngredient = ing;
+										foreach (Ingredient ingr in player.activeIngredients)
+											if ((ingr.group == 0 && ingr.name == ing.name) || (ingr.group != 0 && ingr.group == ing.group))
+												fulfilledIngredient.Add(ingr);
 										args.Handled = true;
 									}
 									else
 									{
 										player.TSPlayer.SendInfoMessage("Dropped {0}.", Utils.FormatItem((Item)ing, stacks));
 										player.droppedItems.Add(new RecItem(item.name, stacks, prefix));
-										fulfilledIngredient = ing;
+										foreach (Ingredient ingr in player.activeIngredients)
+											if ((ingr.group == 0 && ingr.name == ing.name) || (ingr.group != 0 && ingr.group == ing.group))
+												fulfilledIngredient.Add(ingr);
 										args.Handled = true;
 									}
 								}
 							}
 
-							if (fulfilledIngredient == null)
+							if (fulfilledIngredient.Count < 1)
 								return;
 
-							player.activeIngredients.Remove(fulfilledIngredient);
-							foreach (RecItem ing in player.activeRecipe.ingredients)
+							player.activeIngredients.RemoveAll(i => fulfilledIngredient.Contains(i));
+
+							foreach (Ingredient ing in player.activeRecipe.ingredients)
 							{
 								if (ing.name == item.name && ing.prefix == -1)
 									ing.prefix = prefix;
@@ -199,7 +204,8 @@ namespace CommandRecipes
 
 							if (player.activeIngredients.Count < 1)
 							{
-								foreach (RecItem pro in player.activeRecipe.products)
+								List<Product> lDetPros = Utils.DetermineProducts(player.activeRecipe.products);
+								foreach (Product pro in lDetPros)
 								{
 									Item product = new Item();
 									product.SetDefaults(pro.name);
@@ -209,7 +215,9 @@ namespace CommandRecipes
 									player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
 									player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 								}
-								Log.Recipe(player.activeRecipe.Clone(), player.name);
+								List<RecItem> prods = new List<RecItem>();
+								lDetPros.ForEach(i => prods.Add(new RecItem(i.name, i.stack, i.prefix)));
+								Log.Recipe(new LogRecipe(player.activeRecipe.name, player.droppedItems, prods), player.name);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
 								player.TSPlayer.SendInfoMessage("Finished crafting.");
@@ -321,10 +329,17 @@ namespace CommandRecipes
 						args.Player.SendErrorMessage("Crafting from inventory is disabled!");
 					}
 					int count = 0;
-					foreach (RecItem ing in player.activeIngredients)
+					Dictionary<int, bool> finishedGroup = new Dictionary<int, bool>();
+					int ingredientCount = player.activeIngredients.Count;
+					foreach (Ingredient ing in player.activeIngredients)
+						if (ing.group != 0 && !finishedGroup.ContainsKey(ing.group))
+							finishedGroup.Add(ing.group, false);
+						else
+							ingredientCount--;
+					//go backwards through inventory, because hotbar stuff is generally valuable?
+					for (var i = 58; i >= 0; i--)
 					{
-						//go backwards through inventory, because hotbar stuff is generally valuable?
-						for (var i = 58; i >= 0; i--)
+						foreach (Ingredient ing in player.activeIngredients)
 						{
 							item = args.TPlayer.inventory[i];
 							if (!args.Player.InventorySlotAvailable)
@@ -334,7 +349,7 @@ namespace CommandRecipes
 								return;
 							}
 
-							if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == item.prefix))
+							if (ing.name == item.name && ing.stack != 0 && (ing.prefix == -1 || ing.prefix == item.prefix) && (ing.group == 0 || !finishedGroup[ing.group]))
 							{
 								if (args.TPlayer.inventory[i].stack < ing.stack)
 								{
@@ -349,24 +364,26 @@ namespace CommandRecipes
 									player.droppedItems.Clear();
 									return;
 								}
-								player.droppedItems.Add(new RecItem(ing.name, ing.stack, args.TPlayer.inventory[i].prefix));
-								args.TPlayer.inventory[i].stack -= ing.stack;
+								player.droppedItems.Add(new RecItem(ing.name, ing.stack, item.prefix));
+								item.stack -= ing.stack;
+								if (ing.group != 0)
+									finishedGroup[ing.group] = true;
 								ing.stack = 0;
 								NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", args.Player.Index, i);
 								count++;
-								foreach (RecItem ingr in player.activeRecipe.ingredients)
+								foreach (Ingredient ingr in player.activeRecipe.ingredients)
 								{
 									if (ingr.name == item.name && ingr.prefix == -1)
-										ingr.prefix = args.TPlayer.inventory[i].prefix;
+										ingr.prefix = item.prefix;
 								}
 								break;
 							}
 						}
 					}
-					if (count < player.activeRecipe.ingredients.Count)
+					if (count < ingredientCount)
 						return;
-					
-					foreach (RecItem pro in player.activeRecipe.products)
+					List<Product> lDetPros = Utils.DetermineProducts(player.activeRecipe.products);
+					foreach (Product pro in lDetPros)
 					{
 						Item product = new Item();
 						product.SetDefaults(pro.name);
@@ -375,7 +392,9 @@ namespace CommandRecipes
 						player.TSPlayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
 						player.TSPlayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 					}
-					Log.Recipe(player.activeRecipe.Clone(), player.name);
+					List<RecItem> prods = new List<RecItem>();
+					lDetPros.ForEach(i => prods.Add(new RecItem(i.name, i.stack, i.prefix)));
+					Log.Recipe(new LogRecipe(player.activeRecipe.name, player.droppedItems, prods), player.name);
 					player.activeRecipe = null;
 					player.droppedItems.Clear();
 					player.TSPlayer.SendInfoMessage("Finished crafting.");
@@ -400,7 +419,7 @@ namespace CommandRecipes
 							return;
 						}
 
-						if (!Utils.CheckIfInRegion2(args.Player, rec.regions))
+						if (!Utils.CheckIfInRegion(args.Player, rec.regions))
 						{
 							args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
 							return;
@@ -408,7 +427,7 @@ namespace CommandRecipes
 
 						if (str.ToLower() == rec.name.ToLower())
 						{
-							player.activeIngredients = new List<RecItem>(rec.ingredients.Count);
+							player.activeIngredients = new List<Ingredient>(rec.ingredients.Count);
 							rec.ingredients.ForEach(i =>
 							{
 								player.activeIngredients.Add(i.Clone());
@@ -422,7 +441,7 @@ namespace CommandRecipes
 						List<string> inglist = Utils.ListIngredients(player.activeRecipe.ingredients);
 						args.Player.SendInfoMessage("The {0} recipe requires {1} to craft. {2}", 
 							player.activeRecipe.name,
-							String.Join(", ", inglist.ToArray(), 0, inglist.Count - 1) + ", and " + inglist.LastOrDefault(),
+							(inglist.Count > 1) ? String.Join(", ", inglist.ToArray(), 0, inglist.Count - 1) + ", and " + inglist.LastOrDefault() : inglist[0],
 							(config.CraftFromInventory) ? "Type \"/craft -confirm\" to craft." : "Please drop all required items.");
 					}
 					break;

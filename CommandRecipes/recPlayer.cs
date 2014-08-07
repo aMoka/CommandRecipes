@@ -11,7 +11,7 @@ namespace CommandRecipes
 	{
 		public int Index;
 		public Recipe activeRecipe;
-		public List<RecItem> activeIngredients;
+		public List<Ingredient> activeIngredients;
 		public List<RecItem> droppedItems = new List<RecItem>();
 
 		public string name { get { return Main.player[Index].name; } }

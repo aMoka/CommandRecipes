@@ -22,7 +22,7 @@ namespace CommandRecipes
 		private FileStream _istream;
 		public StreamReader Reader { get; protected set; }
 		public StreamWriter Writer { get; protected set; }
-		public Dictionary<string, List<Recipe>> CompletedRecipes { get; protected set; }
+		public Dictionary<string, List<LogRecipe>> CompletedRecipes { get; protected set; }
 
 		#region Initialize
 		public void Initialize()
@@ -34,7 +34,7 @@ namespace CommandRecipes
 			Reader = new StreamReader(_istream);
 			//Task.Factory.StartNew(() => Load());
 			//Load();
-			CompletedRecipes = new Dictionary<string, List<Recipe>>();
+			CompletedRecipes = new Dictionary<string, List<LogRecipe>>();
 		}
 		#endregion
 
@@ -67,7 +67,7 @@ namespace CommandRecipes
 		/// <summary>
 		/// Logs a crafted recipe to the log file.
 		/// </summary>
-		public void Recipe(Recipe recipe, string player)
+		public void Recipe(LogRecipe recipe, string player)
 		{
 			try
 			{
@@ -84,7 +84,7 @@ namespace CommandRecipes
 					products);
 				Writer.WriteLine(str);
 				Writer.Flush();
-				CompletedRecipes.AddToList(new KeyValuePair<string, Recipe>(player, recipe));
+				//CompletedRecipes.AddToList(new KeyValuePair<string, LogRecipe>(player, recipe));
 
 			}
 			catch (Exception ex)
@@ -98,16 +98,16 @@ namespace CommandRecipes
 		/// <summary>
 		/// Returns the list of crafted recipes directly from the log.
 		/// </summary>
-		public Dictionary<string, List<Recipe>> LoadRecipes()
+		public Dictionary<string, List<LogRecipe>> LoadRecipes()
 		{
-			var dic = new Dictionary<string, List<Recipe>>();
-			KeyValuePair<string, Recipe> pair;
+			var dic = new Dictionary<string, List<LogRecipe>>();
+			KeyValuePair<string, LogRecipe> pair;
 			while (!Reader.EndOfStream)
 			{
 				pair = ParseLine(Reader.ReadLine());
 				if (!dic.ContainsKey(pair.Key))
 				{
-					dic.Add(pair.Key, new List<Recipe>());
+					dic.Add(pair.Key, new List<LogRecipe>());
 				}
 				dic[pair.Key].Add(pair.Value);
 			}
@@ -120,7 +120,7 @@ namespace CommandRecipes
 		/// <summary>
 		/// Returns a list of Recipes crafted by player name
 		/// </summary>
-		public List<Recipe> GetRecipes(string player)
+		public List<LogRecipe> GetRecipes(string player)
 		{
 			return CompletedRecipes[player];
 		}
@@ -200,7 +200,7 @@ namespace CommandRecipes
 		}
 		#endregion
 		#region ParseLine
-		KeyValuePair<string, Recipe> ParseLine(string line)
+		KeyValuePair<string, LogRecipe> ParseLine(string line)
 		{
 			bool reading = false;
 			int pos = 0;
@@ -231,9 +231,9 @@ namespace CommandRecipes
 				}
 			}
 
-			return new KeyValuePair<string, Recipe>(
+			return new KeyValuePair<string, LogRecipe>(
 				reader[0],
-				new Recipe(reader[1], ParseItems(reader[2]), ParseItems(reader[3])));
+				new LogRecipe(reader[1], ParseItems(reader[2]), ParseItems(reader[3])));
 		}
 		#endregion
 		#endregion
