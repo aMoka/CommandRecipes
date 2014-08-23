@@ -413,20 +413,18 @@ namespace CommandRecipes
 					}
 					foreach (Recipe rec in config.Recipes)
 					{
-						if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
-						{
-							args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
-							return;
-						}
-
-						if (!Utils.CheckIfInRegion(args.Player, rec.regions))
-						{
-							args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
-							return;
-						}
-
 						if (str.ToLower() == rec.name.ToLower())
 						{
+							if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
+							{
+								args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
+								return;
+							}
+							if (!Utils.CheckIfInRegion(args.Player, rec.regions))
+							{
+								args.Player.SendErrorMessage("You are not in a valid region to craft the recipe: {0}!", rec.name);
+								return;
+							}
 							player.activeIngredients = new List<Ingredient>(rec.ingredients.Count);
 							rec.ingredients.ForEach(i =>
 							{
