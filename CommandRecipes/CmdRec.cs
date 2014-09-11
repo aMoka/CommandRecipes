@@ -146,7 +146,7 @@ namespace CommandRecipes
 					Item item = new Item();
 					item.SetDefaults(netid);
 
-					if (id == 0)
+					if (id != 400)
 						return;
 					
 					foreach (RecPlayer player in RPlayers)
@@ -170,7 +170,6 @@ namespace CommandRecipes
 									}
 									else if (ing.stack < 0)
 									{
-										// All messages have periods now.
 										player.TSPlayer.SendInfoMessage("Giving back {0}.", Utils.FormatItem((Item)ing));
 										player.TSPlayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), prefix);
 										player.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, prefix));
@@ -330,58 +329,78 @@ namespace CommandRecipes
 					}
 					int count = 0;
 					Dictionary<int, bool> finishedGroup = new Dictionary<int, bool>();
+					Dictionary<int, int> slots = new Dictionary<int, int>();
 					int ingredientCount = player.activeIngredients.Count;
 					foreach (Ingredient ing in player.activeIngredients)
-						if (ing.group != 0 && !finishedGroup.ContainsKey(ing.group))
-							finishedGroup.Add(ing.group, false);
-						else
-							ingredientCount--;
-					//go backwards through inventory, because hotbar stuff is generally valuable?
-					for (var i = 58; i >= 0; i--)
 					{
-						foreach (Ingredient ing in player.activeIngredients)
+						if (!finishedGroup.ContainsKey(ing.group))
 						{
-							item = args.TPlayer.inventory[i];
-							if (!args.Player.InventorySlotAvailable)
+							finishedGroup.Add(ing.group, false);
+						}
+						else if (ing.group != 0)
+							ingredientCount--;
+					}
+					foreach (Ingredient ing in player.activeIngredients)
+					{
+						if (ing.group == 0 || !finishedGroup[ing.group])
+						{
+							Dictionary<int, RecItem> ingSlots = new Dictionary<int, RecItem>();
+							for (int i = 58; i >= 0; i--)
 							{
-								args.Player.SendErrorMessage("Insufficient inventory space!");
-								player.activeRecipe = null;
-								return;
-							}
-
-							if (ing.name == item.name && ing.stack != 0 && (ing.prefix == -1 || ing.prefix == item.prefix) && (ing.group == 0 || !finishedGroup[ing.group]))
-							{
-								if (args.TPlayer.inventory[i].stack < ing.stack)
+								item = args.TPlayer.inventory[i];
+								if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == item.prefix))
 								{
-									args.Player.SendErrorMessage("Insufficient amount of ingredients!");
-									foreach (RecItem itm in player.droppedItems)
-									{
-										Item m = new Item();
-										m.SetDefaults(itm.name);
-										args.Player.GiveItem(m.type, m.name, m.width, m.height, itm.stack, itm.prefix);
-									}
-									player.activeRecipe = null;
-									player.droppedItems.Clear();
-									return;
+									ingSlots.Add(i, new RecItem(item.name, item.stack, item.prefix));
 								}
-								player.droppedItems.Add(new RecItem(ing.name, ing.stack, item.prefix));
-								item.stack -= ing.stack;
+							}
+							if (ingSlots.Count == 0)
+								continue;
+
+							int totalStack = 0;
+							foreach (var key in ingSlots.Keys)
+								totalStack += ingSlots[key].stack;
+
+							if (totalStack >= ing.stack)
+							{
+								foreach (var key in ingSlots.Keys)
+									slots.Add(key, (ingSlots[key].stack < ing.stack) ? args.TPlayer.inventory[key].stack : ing.stack);
 								if (ing.group != 0)
 									finishedGroup[ing.group] = true;
-								ing.stack = 0;
-								NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", args.Player.Index, i);
 								count++;
-								foreach (Ingredient ingr in player.activeRecipe.ingredients)
-								{
-									if (ingr.name == item.name && ingr.prefix == -1)
-										ingr.prefix = item.prefix;
-								}
-								break;
 							}
 						}
 					}
 					if (count < ingredientCount)
+					{
+						args.Player.SendErrorMessage("Insufficient ingredients!");
 						return;
+					}
+					if (!args.Player.InventorySlotAvailable)
+					{
+						args.Player.SendErrorMessage("Insufficient inventory space!");
+						return;
+					}
+					foreach (var slot in slots)
+					{
+						item = args.TPlayer.inventory[slot.Key];
+						var ing = player.activeIngredients.GetIngredient(item.name, item.prefix);
+						if (ing.stack > 0)
+						{
+							int stack;
+							if (ing.stack < slot.Value)
+								stack = ing.stack;
+							else
+								stack = slot.Value;
+
+							item.stack -= stack;
+							ing.stack -= stack;
+							NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", args.Player.Index, slot.Key);
+							if (!player.droppedItems.ContainsItem(item.name, item.prefix))
+								player.droppedItems.Add(new RecItem(item.name, stack, item.prefix));
+							else
+								player.droppedItems.GetItem(item.name, item.prefix).stack += slot.Value;
+						}
+					}
 					List<Product> lDetPros = Utils.DetermineProducts(player.activeRecipe.products);
 					foreach (Product pro in lDetPros)
 					{
