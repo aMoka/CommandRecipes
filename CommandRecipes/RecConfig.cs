@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Terraria;
+using TShockAPI;
 
 namespace CommandRecipes
 {
@@ -28,16 +30,16 @@ namespace CommandRecipes
 		}
 
 		// Operators for explicit conversions
-		public static explicit operator Terraria.Item(RecItem item)
+		public static explicit operator Item(RecItem item)
 		{
-			var titem = new Terraria.Item();
+			var titem = new Item();
 			titem.SetDefaults(item.name);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
 			return titem;
 		}
 
-		public static explicit operator RecItem(Terraria.Item item)
+		public static explicit operator RecItem(Item item)
 		{
 			return new RecItem(item.name, item.stack, item.prefix);
 		}
@@ -52,7 +54,16 @@ namespace CommandRecipes
 
 		public Ingredient(string name, int stack, int prefix, int group)
 		{
-			this.name = name;
+			// Can now obtain the item from its netID. Yay!
+			int id;
+			if (int.TryParse(name, out id))
+			{
+				Item item = TShock.Utils.GetItemById(id);
+				this.name = item != null ? item.name : name;
+			}
+			else
+				this.name = name;
+
 			this.stack = stack;
 			this.prefix = prefix;
 			this.group = group;
@@ -63,9 +74,9 @@ namespace CommandRecipes
 			return MemberwiseClone() as Ingredient;
 		}
 
-		public static explicit operator Terraria.Item(Ingredient item)
+		public static explicit operator Item(Ingredient item)
 		{
-			var titem = new Terraria.Item();
+			var titem = new Item();
 			titem.SetDefaults(item.name);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
@@ -83,7 +94,16 @@ namespace CommandRecipes
 
 		public Product(string name, int stack, int prefix, int group, int weight)
 		{
-			this.name = name;
+			// Ditto Ingredient
+			int id;
+			if (int.TryParse(name, out id))
+			{
+				Item item = TShock.Utils.GetItemById(id);
+				this.name = item != null ? item.name : name;
+			}
+			else
+				this.name = name;
+
 			this.stack = stack;
 			this.prefix = prefix;
 			this.group = group;
@@ -95,9 +115,9 @@ namespace CommandRecipes
 			return MemberwiseClone() as Product;
 		}
 
-		public static explicit operator Terraria.Item(Product item)
+		public static explicit operator Item(Product item)
 		{
-			var titem = new Terraria.Item();
+			var titem = new Item();
 			titem.SetDefaults(item.name);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
