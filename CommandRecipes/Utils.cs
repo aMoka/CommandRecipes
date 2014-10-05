@@ -109,6 +109,57 @@ namespace CommandRecipes
 			return false;
 		}
 
+		// I stole this code from my AutoRank plugin - with a few changes. It worked, so.
+		public static string ParseCommand(TSPlayer player, string text)
+		{
+			if (player == null || string.IsNullOrEmpty(text))
+				return "";
+
+			var replacements = new Dictionary<string, object>();
+
+			replacements.Add("$group", player.Group.Name);
+			replacements.Add("$ip", player.IP);
+			replacements.Add("$playername", player.Name);
+			replacements.Add("$username", player.UserAccountName);
+
+			foreach (var word in replacements)
+			{
+				// Quotes are automatically added - no more self-imposed quotes with $playername!
+				text = text.Replace(word.Key, "\"{0}\"".SFormat(word.Value.ToString()));
+			}
+
+			return text;
+		}
+
+		// ^ Such ditto, many IVs.
+		public static List<string> ParseParameters(string text)
+		{
+			text = text.Trim();
+			var args = new List<string>();
+			StringBuilder sb = new StringBuilder();
+			bool quote = false;
+			for (int i = 0; i < text.Length; i++)
+			{
+				char c = text[i];
+
+				if (char.IsWhiteSpace(c) && !quote)
+				{
+					args.Add(sb.ToString());
+					sb.Clear();
+				}
+				else if (c == '"')
+				{
+					quote = !quote;
+				}
+				else
+				{
+					sb.Append(c);
+				}
+			}
+			args.Add(sb.ToString());
+			return args;
+		}
+
 		#region SetUpConfig
 		public static void SetUpConfig()
 		{

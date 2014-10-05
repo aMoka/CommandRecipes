@@ -152,8 +152,10 @@ namespace CommandRecipes
 		public List<string> categories = new List<string>();
 		public List<string> permissions = new List<string>();
 		public List<string> regions = new List<string>();
+		public bool invisible = false;
+		public string[] commands;
 
-		public Recipe(string name, List<Ingredient> ingredients, List<Product> products, List<string> categories = null, List<string> permissions = null, List<string> regions = null)
+		public Recipe(string name, List<Ingredient> ingredients, List<Product> products, List<string> categories = null, List<string> permissions = null, List<string> regions = null, bool invisible = false, string[] commands = null)
 		{
 			this.name = name;
 			this.ingredients = ingredients;
@@ -161,16 +163,66 @@ namespace CommandRecipes
 			this.categories = categories;
 			this.permissions = permissions;
 			this.regions = regions;
+			this.invisible = invisible;
+			this.commands = commands;
 		}
 
 		public override Recipe Clone()
 		{
-			var clone = (Recipe)MemberwiseClone();
+			var clone = MemberwiseClone() as Recipe;
 			clone.ingredients = new List<Ingredient>(ingredients.Count);
 			clone.products = new List<Product>(products.Count);
 			ingredients.ForEach(i => clone.ingredients.Add(i.Clone()));
 			products.ForEach(i => clone.products.Add(i.Clone()));
 			return clone;
+		}
+
+		/// <summary>
+		/// Runs associated commands. Returns -1 if an exception occured.
+		/// </summary>
+		public int ExecuteCommands(TSPlayer player)
+		{
+			int cmdCount = 0;
+			try
+			{
+				if (commands == null || commands.Length < 1)
+					return 0;
+
+				List<string> args;
+				Command cmd;
+				string text;
+				for (int i = 0; i < commands.Length; i++)
+				{
+					text = Utils.ParseCommand(player, commands[i]);
+					text = text.Remove(0, 1);
+
+					args = Utils.ParseParameters(text);
+					cmd = Commands.ChatCommands.Find(c => c.HasAlias(args[0]));
+
+					// Found the command, may remove its alias.
+					args.RemoveAt(0);
+
+					if (cmd != null)
+					{
+						try
+						{
+							// Execute the command without checking for permissions (?)
+							cmd.CommandDelegate(new CommandArgs(text, player, args));
+							cmdCount++;
+						}
+						catch (Exception)
+						{
+							// Swallow (and shall the rest conclude). Delicious.
+						}
+					}
+				}
+			}
+			catch (Exception)
+			{
+				return -1;
+			}
+
+			return cmdCount;
 		}
 	}
 

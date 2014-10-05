@@ -217,6 +217,8 @@ namespace CommandRecipes
 								List<RecItem> prods = new List<RecItem>();
 								lDetPros.ForEach(i => prods.Add(new RecItem(i.name, i.stack, i.prefix)));
 								Log.Recipe(new LogRecipe(player.activeRecipe.name, player.droppedItems, prods), player.name);
+								// Commands :o (NullReferenceException-free :l)
+								player.activeRecipe.Clone().ExecuteCommands(player.TSPlayer);
 								player.activeRecipe = null;
 								player.droppedItems.Clear();
 								player.TSPlayer.SendInfoMessage("Finished crafting.");
@@ -251,7 +253,9 @@ namespace CommandRecipes
 						return;
 
 					List<string> allRec = new List<string>();
-					foreach (Recipe rec in CmdRec.config.Recipes)
+
+					// Add any recipe that isn't invisible kappa
+					foreach (Recipe rec in CmdRec.config.Recipes.FindAll(r => !r.invisible))
 						allRec.Add(rec.name);
 					PaginationTools.SendPage(args.Player, page, PaginationTools.BuildLinesFromTerms(allRec),
 						new PaginationTools.Settings
@@ -267,7 +271,9 @@ namespace CommandRecipes
 						return;
 
 					List<string> allCat = new List<string>();
-					foreach (Recipe rec in CmdRec.config.Recipes)
+
+					// Another ditto from -list
+					foreach (Recipe rec in CmdRec.config.Recipes.FindAll(r => !r.invisible))
 						rec.categories.ForEach(i => { 
 							if (!allCat.Contains(i))
 								allCat.Add(i); 
@@ -297,7 +303,9 @@ namespace CommandRecipes
 					else
 					{
 						List<string> catrec = new List<string>();
-						foreach (Recipe rec in config.Recipes)
+
+						// Keep bringing them!
+						foreach (Recipe rec in config.Recipes.FindAll(r => !r.invisible))
 						{
 							rec.categories.ForEach(i =>
 							{
