@@ -189,8 +189,8 @@ namespace CommandRecipes
 				//Console.ForegroundColor = ConsoleColor.Red;
 				//Console.WriteLine("Error in recConfig.json!");
 				//Console.ResetColor();
-				Log.ConsoleError("Error in recConfig.json!");
-				Log.ConsoleError(ex.ToString());
+				TShock.Log.ConsoleError("Error in recConfig.json!");
+				TShock.Log.ConsoleError(ex.ToString());
 			}
 		}
 		#endregion

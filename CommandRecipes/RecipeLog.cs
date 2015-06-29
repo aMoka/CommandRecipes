@@ -58,7 +58,7 @@ namespace CommandRecipes
 			}
 			catch (Exception ex)
 			{
-				Log.ConsoleError(ex.ToString());
+				TShock.Log.ConsoleError(ex.ToString());
 			}
 		}
 		#endregion
@@ -89,7 +89,7 @@ namespace CommandRecipes
 			}
 			catch (Exception ex)
 			{
-				Log.ConsoleError(ex.ToString());
+				TShock.Log.ConsoleError(ex.ToString());
 			}
 		}
 		#endregion
