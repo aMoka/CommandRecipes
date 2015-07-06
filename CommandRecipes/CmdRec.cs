@@ -14,7 +14,7 @@ using TShockAPI.DB;
 
 namespace CommandRecipes
 {
-	[ApiVersion(1, 17)]
+	[ApiVersion(1, 18)]
 	public class CmdRec : TerrariaPlugin
 	{
 		public static List<string> cats = new List<string>();
