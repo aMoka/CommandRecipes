@@ -12,27 +12,6 @@ namespace CommandRecipes
 {
 	public class Utils
 	{
-		public static List<RecPlayer> GetPlayerList(string name)
-		{
-			foreach (RecPlayer player in CmdRec.RPlayers)
-			{
-				if (player.name.ToLower().Contains(name.ToLower()))
-				{
-					return new List<RecPlayer>() { player };
-				}
-			}
-			return new List<RecPlayer>();
-		}
-
-		public static RecPlayer GetPlayer(int index)
-		{
-			foreach (RecPlayer player in CmdRec.RPlayers)
-				if (player.Index == index)
-					return player;
-
-			return null;
-		}
-
 		public static List<string> ListIngredients(List<Ingredient> actIngs)
 		{
 			List<string> lActIngs = new List<string>();

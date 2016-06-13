@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TShockAPI;
 
 namespace CommandRecipes
 {
 	public static class Extensions
 	{
-		public static RecPlayer AddToList(this List<RecPlayer> list, RecPlayer item)
+		public static RecipeData GetRecipeData(this TSPlayer player, bool createIfNotExists = false)
 		{
-			if (!list.Contains(item))
-				list.Add(item);
-			return item;
+			if (!player.ContainsData(RecipeData.KEY) && createIfNotExists)
+			{
+				player.SetData(RecipeData.KEY, new RecipeData());
+			}
+			return player.GetData<RecipeData>(RecipeData.KEY);
 		}
 
 		public static void AddToList(this Dictionary<string, List<Recipe>> dic, KeyValuePair<string, Recipe> pair)
