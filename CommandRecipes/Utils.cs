@@ -120,7 +120,7 @@ namespace CommandRecipes
 			replacements.Add("$group", player.Group.Name);
 			replacements.Add("$ip", player.IP);
 			replacements.Add("$playername", player.Name);
-			replacements.Add("$username", player.UserAccountName);
+			replacements.Add("$username", player.User.Name);
 
 			foreach (var word in replacements)
 			{
