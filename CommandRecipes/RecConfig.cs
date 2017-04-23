@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Terraria;
 using TShockAPI;
@@ -29,7 +30,7 @@ namespace CommandRecipes
 		public static explicit operator Item(RecItem item)
 		{
 			var titem = new Item();
-			titem.SetDefaults(item.name);
+			titem.SetDefaults(TShock.Utils.GetItemByIdOrName(item.name).First().netID);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
 			return titem;
@@ -37,7 +38,7 @@ namespace CommandRecipes
 
 		public static explicit operator RecItem(Item item)
 		{
-			return new RecItem(item.name, item.stack, item.prefix);
+			return new RecItem(item.Name, item.stack, item.prefix);
 		}
 	}
 
@@ -55,7 +56,7 @@ namespace CommandRecipes
 			if (int.TryParse(name, out id))
 			{
 				Item item = TShock.Utils.GetItemById(id);
-				this.name = item != null ? item.name : name;
+				this.name = item != null ? item.Name : name;
 			}
 			else
 				this.name = name;
@@ -73,7 +74,7 @@ namespace CommandRecipes
 		public static explicit operator Item(Ingredient item)
 		{
 			var titem = new Item();
-			titem.SetDefaults(item.name);
+			titem.SetDefaults(TShock.Utils.GetItemByIdOrName(item.name).First().netID);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
 			return titem;
@@ -95,7 +96,7 @@ namespace CommandRecipes
 			if (int.TryParse(name, out id))
 			{
 				Item item = TShock.Utils.GetItemById(id);
-				this.name = item != null ? item.name : name;
+				this.name = item != null ? item.Name : name;
 			}
 			else
 				this.name = name;
@@ -114,7 +115,7 @@ namespace CommandRecipes
 		public static explicit operator Item(Product item)
 		{
 			var titem = new Item();
-			titem.SetDefaults(item.name);
+			titem.SetDefaults(TShock.Utils.GetItemByIdOrName(item.name).First().netID);
 			titem.stack = item.stack;
 			titem.prefix = (byte)item.prefix;
 			return titem;

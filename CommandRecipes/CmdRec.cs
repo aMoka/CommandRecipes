@@ -5,13 +5,14 @@ using System.IO.Streams;
 using System.Linq;
 using System.Reflection;
 using Terraria;
+using Terraria.Localization;
 using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.Hooks;
 
 namespace CommandRecipes
 {
-	[ApiVersion(2, 0)]
+	[ApiVersion(2, 1)]
 	public class CmdRec : TerrariaPlugin
 	{
 		public static List<string> cats = new List<string>();
@@ -135,7 +136,7 @@ namespace CommandRecipes
 						foreach (Ingredient ing in recData.activeIngredients)
 						{
 							//ing.prefix == -1 means accepts any prefix
-							if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == prefix))
+							if (ing.name == item.Name && (ing.prefix == -1 || ing.prefix == prefix))
 							{
 								ing.stack -= stacks;
 
@@ -145,18 +146,18 @@ namespace CommandRecipes
 									if (recData.droppedItems.Exists(i => i.name == ing.name))
 										recData.droppedItems.Find(i => i.name == ing.name).stack += stacks;
 									else
-										recData.droppedItems.Add(new RecItem(item.name, stacks, prefix));
+										recData.droppedItems.Add(new RecItem(item.Name, stacks, prefix));
 									args.Handled = true;
 									return;
 								}
 								else if (ing.stack < 0)
 								{
 									tsplayer.SendInfoMessage("Giving back {0}.", Utils.FormatItem((Item)ing));
-									tsplayer.GiveItem(item.type, item.name, item.width, item.height, Math.Abs(ing.stack), prefix);
+									tsplayer.GiveItem(item.type, item.Name, item.width, item.height, Math.Abs(ing.stack), prefix);
 									if (recData.droppedItems.Exists(i => i.name == ing.name))
 										recData.droppedItems.Find(i => i.name == ing.name).stack += (stacks + ing.stack);
 									else
-										recData.droppedItems.Add(new RecItem(item.name, stacks + ing.stack, prefix));
+										recData.droppedItems.Add(new RecItem(item.Name, stacks + ing.stack, prefix));
 									foreach (Ingredient ingr in recData.activeIngredients)
 										if ((ingr.group == 0 && ingr.name == ing.name) || (ingr.group != 0 && ingr.group == ing.group))
 											fulfilledIngredient.Add(ingr);
@@ -168,7 +169,7 @@ namespace CommandRecipes
 									if (recData.droppedItems.Exists(i => i.name == ing.name))
 										recData.droppedItems.Find(i => i.name == ing.name).stack += stacks;
 									else
-										recData.droppedItems.Add(new RecItem(item.name, stacks, prefix));
+										recData.droppedItems.Add(new RecItem(item.Name, stacks, prefix));
 									foreach (Ingredient ingr in recData.activeIngredients)
 										if ((ingr.group == 0 && ingr.name == ing.name) || (ingr.group != 0 && ingr.group == ing.group))
 											fulfilledIngredient.Add(ingr);
@@ -184,7 +185,7 @@ namespace CommandRecipes
 
 						foreach (Ingredient ing in recData.activeRecipe.ingredients)
 						{
-							if (ing.name == item.name && ing.prefix == -1)
+							if (ing.name == item.Name && ing.prefix == -1)
 								ing.prefix = prefix;
 						}
 
@@ -194,11 +195,11 @@ namespace CommandRecipes
 							foreach (Product pro in lDetPros)
 							{
 								Item product = new Item();
-								product.SetDefaults(pro.name);
+								product.SetDefaults(TShock.Utils.GetItemByIdOrName(pro.name).First().netID);
 								//itm.Prefix(-1) means at least a 25% chance to hit prefix = 0. if < -1, even chances. 
 								product.Prefix(pro.prefix);
 								pro.prefix = product.prefix;
-								tsplayer.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
+								tsplayer.GiveItem(product.type, product.Name, product.width, product.height, pro.stack, product.prefix);
 								tsplayer.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 							}
 							List<RecItem> prods = new List<RecItem>();
@@ -335,7 +336,7 @@ namespace CommandRecipes
 						foreach (RecItem itm in recData.droppedItems)
 						{
 							item = new Item();
-							item.SetDefaults(itm.name);
+							item.SetDefaults(TShock.Utils.GetItemByIdOrName(itm.name).First().netID);
 							args.Player.GiveItem(item.type, itm.name, item.width, item.height, itm.stack, itm.prefix);
 							args.Player.SendInfoMessage("Returned {0}.", Utils.FormatItem((Item)itm));
 						}
@@ -370,9 +371,9 @@ namespace CommandRecipes
 							for (int i = 58; i >= 0; i--)
 							{
 								item = args.TPlayer.inventory[i];
-								if (ing.name == item.name && (ing.prefix == -1 || ing.prefix == item.prefix))
+								if (ing.name == item.Name && (ing.prefix == -1 || ing.prefix == item.prefix))
 								{
-									ingSlots.Add(i, new RecItem(item.name, item.stack, item.prefix));
+									ingSlots.Add(i, new RecItem(item.Name, item.stack, item.prefix));
 								}
 							}
 							if (ingSlots.Count == 0)
@@ -405,7 +406,7 @@ namespace CommandRecipes
 					foreach (var slot in slots)
 					{
 						item = args.TPlayer.inventory[slot.Key];
-						var ing = recData.activeIngredients.GetIngredient(item.name, item.prefix);
+						var ing = recData.activeIngredients.GetIngredient(item.Name, item.prefix);
 						if (ing.stack > 0)
 						{
 							int stack;
@@ -416,21 +417,21 @@ namespace CommandRecipes
 
 							item.stack -= stack;
 							ing.stack -= stack;
-							NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, "", args.Player.Index, slot.Key);
-							if (!recData.droppedItems.ContainsItem(item.name, item.prefix))
-								recData.droppedItems.Add(new RecItem(item.name, stack, item.prefix));
+							NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, args.Player.Index, slot.Key);
+							if (!recData.droppedItems.ContainsItem(item.Name, item.prefix))
+								recData.droppedItems.Add(new RecItem(item.Name, stack, item.prefix));
 							else
-								recData.droppedItems.GetItem(item.name, item.prefix).stack += slot.Value;
+								recData.droppedItems.GetItem(item.Name, item.prefix).stack += slot.Value;
 						}
 					}
 					List<Product> lDetPros = Utils.DetermineProducts(recData.activeRecipe.products);
 					foreach (Product pro in lDetPros)
 					{
 						Item product = new Item();
-						product.SetDefaults(pro.name);
+						product.SetDefaults(TShock.Utils.GetItemByIdOrName(pro.name).First().netID);
 						product.Prefix(pro.prefix);
 						pro.prefix = product.prefix;
-						args.Player.GiveItem(product.type, product.name, product.width, product.height, pro.stack, product.prefix);
+						args.Player.GiveItem(product.type, product.Name, product.width, product.height, pro.stack, product.prefix);
 						args.Player.SendSuccessMessage("Received {0}.", Utils.FormatItem((Item)pro));
 					}
 					List<RecItem> prods = new List<RecItem>();

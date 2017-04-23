@@ -176,7 +176,7 @@ namespace CommandRecipes
 		// Required until everyone gets their TShock updated
 		public static string GetPrefixById(int id)
 		{
-			return id < 1 || id > 83 ? "" : Lang.prefix[id] ?? "";
+			return id < 1 || id > 83 ? "" : Lang.prefix[id].Value ?? "";
 		}
 		#endregion
 
@@ -192,7 +192,7 @@ namespace CommandRecipes
 			return String.Format("{0} {1}{2}(s)",
 				(stacks == 0) ? Math.Abs(item.stack) : stacks,
 				prefix,
-				item.name);
+				item.Name);
 		}
 		public static string LogFormatItem(Item item, int stacks = 0)
 		{
@@ -201,7 +201,7 @@ namespace CommandRecipes
 			return String.Format("{0} {1}{2}(s)",
 				(stacks == 0) ? Math.Abs(item.stack) : stacks,
 				prefix,
-				item.name);
+				item.Name);
 		}
 		#endregion
 
