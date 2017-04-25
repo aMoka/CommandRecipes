@@ -26,12 +26,11 @@ namespace CommandRecipes
 			}
 		}
 
-		// The old method didn't work for superadmin, sadly :(
-		public static bool CheckPermissions(this TShockAPI.Group group, List<string> perms)
+		public static bool CheckPermissions(this TShockAPI.TSPlayer player, List<string> perms)
 		{
 			foreach (var perm in perms)
 			{
-				if (group.HasPermission(perm))
+				if (player.HasPermission(perm))
 					return true;
 			}
 			return false;

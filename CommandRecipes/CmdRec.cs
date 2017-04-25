@@ -458,7 +458,7 @@ namespace CommandRecipes
 					{
 						if (str.ToLower() == rec.name.ToLower())
 						{
-							if (!rec.permissions.Contains("") && !args.Player.Group.CheckPermissions(rec.permissions))
+							if (!rec.permissions.Contains("") && !args.Player.CheckPermissions(rec.permissions))
 							{
 								args.Player.SendErrorMessage("You do not have the required permission to craft the recipe: {0}!", rec.name);
 								return;

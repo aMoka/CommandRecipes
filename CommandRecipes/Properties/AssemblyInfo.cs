@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("CommandRecipes")]
-[assembly: AssemblyCopyright("Copyright aMoka & Enerdy © 2015-2016")]
+[assembly: AssemblyCopyright("Copyright aMoka & Enerdy © 2015-2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
