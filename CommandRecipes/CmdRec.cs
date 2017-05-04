@@ -349,6 +349,7 @@ namespace CommandRecipes
 					if (!config.CraftFromInventory)
 					{
 						args.Player.SendErrorMessage("Crafting from inventory is disabled!");
+						return;
 					}
 					int count = 0;
 					Dictionary<int, bool> finishedGroup = new Dictionary<int, bool>();
