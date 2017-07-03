@@ -224,7 +224,7 @@ namespace CommandRecipes
 				return;
 
 			if (Memory.Contains(args.Player.Name))
-				args.Player.SetData(RecipeData.KEY, Memory.Load(args.Player.Name));
+				args.Player.SetData(RecipeData.KEY, Memory.Pop(args.Player.Name));
 		}
 
 		void OnLogout(PlayerLogoutEventArgs args)

@@ -17,9 +17,10 @@ namespace CommandRecipes
 			return memory.ContainsKey(playerName);
 		}
 
-		public RecipeData Load(string playerName)
+		public RecipeData Pop(string playerName)
 		{
 			RecipeData data = memory[playerName]?.Clone();
+			memory.Remove(playerName);
 			return data;
 		}
 
